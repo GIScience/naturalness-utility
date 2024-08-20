@@ -1,0 +1,11 @@
+unit_tests:
+  stage: test
+  image:
+    name: python:3.11.4
+  before_script:
+    - pip install poetry
+    - poetry config virtualenvs.in-project false
+    - poetry install
+    - source `poetry env info --path`/bin/activate
+  script:
+    - poetry run pytest
