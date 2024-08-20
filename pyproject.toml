@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "datafusion"
+version = "0.1.0"
+description = "This utility provides the functionality of different indices derived from remote sensing data"
+authors = [
+    "anna.buch <a.buch@stud.uni-heidelberg.de>",
+    "Maciej Adamiak <maciej.adamiak@heigit.org>"
+]
+readme = "README.md"
+repository = "https://gitlab.gistools.geog.uni-heidelberg.de/climate-action/utilities/naturalness-utility"
+
+[tool.poetry.dependencies]
+python = "~3.11.4"
+pre-commit = "^3.8.0"
+ipytest = "^0.14.2"
+sentinelhub = "^3.10.2"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.1"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
