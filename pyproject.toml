@@ -14,6 +14,8 @@ python = "~3.11.4"
 pre-commit = "^3.8.0"
 ipytest = "^0.14.2"
 sentinelhub = "^3.10.2"
+configobj = "^5.0.8"
+omegaconf = "^2.3.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.1"
