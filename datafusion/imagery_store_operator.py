@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Dict, Tuple
@@ -15,6 +16,9 @@ from sentinelhub import (
 )
 
 from datafusion.exception import OperatorInteractionException, OperatorValidationException
+
+
+log = logging.getLogger(__name__)
 
 
 class ImageryStore(ABC):
@@ -35,6 +39,7 @@ class SentinelHubOperator(ImageryStore):
         self,
         api_id: str,
         api_secret: str,
+        index: str,
         evalscript_name: str,
         cache_dir: Path,
     ):
@@ -42,7 +47,7 @@ class SentinelHubOperator(ImageryStore):
         self.cache_dir: Path = cache_dir
         self.data_folder = self.cache_dir
         self.data_folder.mkdir(parents=True, exist_ok=True)
-
+        self.index = index
         self.evalscript = (Path('conf') / f'{evalscript_name}.js').read_text()
 
     def imagery(
@@ -54,7 +59,7 @@ class SentinelHubOperator(ImageryStore):
         save_data: bool = False,
     ) -> tuple[Dict[str, np.ndarray], tuple[int, int]]:
         """
-        returns images as numpy array in shape [height, widht, channels]
+        returns images as numpy array in shape [height, width, channels]
         """
         bbox = BBox(bbox=area_coords, crs=CRS.WGS84)
         bbox_width, bbox_height = bbox_to_dimensions(bbox, resolution=resolution)
@@ -73,7 +78,7 @@ class SentinelHubOperator(ImageryStore):
                 ),
             ],
             responses=[
-                SentinelHubRequest.output_response('indice', MimeType.TIFF),
+                SentinelHubRequest.output_response(f'{self.index}', MimeType.TIFF),
             ],
             bbox=bbox,
             size=(bbox_width, bbox_height),
@@ -82,14 +87,18 @@ class SentinelHubOperator(ImageryStore):
         try:
             return request.get_data(save_data=save_data)[0], (bbox_height, bbox_width)
         except DownloadFailedException:
-            print('Download failed')
+            log.exception('Download of remote sensing scenes failed')
             raise OperatorInteractionException('SentinelHub operator interaction not possible.')
 
 
 def resolve_imagery_store(cfg: DictConfig, cache_dir: Path) -> ImageryStore:
+    index = list(cfg.index_name)[0]
+    evalscript_name = cfg.index_name[index].evalscript_name
+
     return SentinelHubOperator(
         cfg.api_id,
         cfg.api_secret,
-        cfg.evalscript_name,
+        index,
+        evalscript_name,
         cache_dir=cache_dir / 'imagery',
     )
