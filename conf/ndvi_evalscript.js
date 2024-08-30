@@ -8,7 +8,7 @@ function setup() {
                 bands: ["B04", "B08","SCL"],
         }],
         output: {
-                id: "indice",
+                id: "ndvi",
                 bands: ["NDVI"],
                 resx: 10,
                 resy: 10,
@@ -50,10 +50,12 @@ function evaluatePixel(samples) {
             var isValid =  validate(sample)
 
             if (isValid) {
+
                 ndvi_value = index(sample.B08, sample.B04)
                 max = ndvi_value > max ? ndvi_value:max
             } else { ndvi_value = NaN }
         }
     }
-  return {indice: [ndvi_value]}
+
+  return {ndvi: [ndvi_value]};
 }
