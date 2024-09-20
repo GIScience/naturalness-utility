@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Tuple, Optional
 
 import numpy as np
+import geopandas as gpd
 import rasterio as rio
 from rasterio.crs import CRS
+from rasterstats import zonal_stats
 from pydantic import confloat, Field, BaseModel, model_validator
 from starlette.requests import Request
 from starlette.responses import FileResponse
@@ -36,14 +38,7 @@ class DatafusionWorkUnit(BaseModel):
     ] = Field(
         title='Area Coordinates',
         description='Bounding box coordinates in WGS 84 (west, south, east, north)',
-        examples=[
-            [
-                12.304687500000002,
-                48.2246726495652,
-                12.480468750000002,
-                48.3416461723746,
-            ]
-        ],
+        examples=[[8.65, 49.38, 8.75, 49.41]],
     )
     start_date: Optional[date] = Field(
         title='Start Date',
@@ -103,3 +98,17 @@ def __compute_raster_response(
         filename=f'{file_uuid}.tiff',
         background=BackgroundTask(unlink),
     )
+
+
+# def aggregate_raster_response(polygon: gpd.GeoDataFrame, raster: GeoTiffResponse) -> JSONResponse:
+def aggregate_raster_response(raster_name: str, df_vector: gpd.GeoDataFrame):
+    with rio.open(raster_name, crs='EPSG:4326') as src:
+        raster_rescaled = src.read(1)
+        raster_rescaled[raster_rescaled < 0] = 0
+
+        ndvi_stats_per_poly = zonal_stats(df_vector, raster_rescaled, affine=src.transform, stats='mean min max')
+        df_vector['index_mean'] = [x['mean'] for x in ndvi_stats_per_poly]
+        df_vector['index_min'] = [x['min'] for x in ndvi_stats_per_poly]
+        df_vector['index_max'] = [x['max'] for x in ndvi_stats_per_poly]
+
+    return df_vector.to_json()
