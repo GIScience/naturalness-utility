@@ -4,13 +4,15 @@ from sentinelhub import BBox, CRS as SCRS, to_utm_bbox
 from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 
+
 from app.route.common import DatafusionWorkUnit, RemoteSensingResult, __compute_raster_response
 
 
 log = logging.getLogger(__name__)
 
 cfg = OmegaConf.load('settings.yaml')
-router = APIRouter(prefix='/raster', tags=[cfg.index_name])
+router = APIRouter(prefix='/raster', tags=[list(cfg.index_name)[0]])
+# router_vector = APIRouter(prefix='/vector', tags=[cfg.index_name])
 
 
 @router.post(
@@ -27,6 +29,34 @@ async def index_compute(body: DatafusionWorkUnit, request: Request):
             status_code=400,
             detail=str(e),
         )
+
+
+# @router_vector.post(
+#    '/',
+#     description='Query index along a vector (e.g. a buffered street), return it as vector (GeoJSON)',
+# )
+# async def index_compute_as_vector(body: DatafusionWorkUnit, request: Request):
+#     log.info(f'Creating index for {body}')
+
+#     # dummy for random OSM vector FIXME  make as json input
+#     TEST_vector = gpd.GeoDataFrame(
+#             {'name': ['poly1', 'poly2'],
+#             'geometry': [
+#                 Polygon(((8.8, 49.40), (8.60, 49.415), (8.70, 49.40), (8.70, 49.40))),
+#                 Polygon(((8.8, 49.38), (8.60, 49.36), (8.70, 49.39), (8.70, 49.36))),
+#          ]}, crs=None)
+
+#     try:
+#         result = __provide(body, request)
+#         result = __compute_raster_response(result, body, request)
+#         result = aggregate_raster_response(result, TEST_vector)
+#         return result
+
+#     except AssertionError as e:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail=str(e),
+#             )
 
 
 def __provide(body: DatafusionWorkUnit, request: Request) -> RemoteSensingResult:
