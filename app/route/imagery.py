@@ -1,29 +1,40 @@
 import logging.config
+from fastapi.responses import JSONResponse
 from omegaconf import OmegaConf
 from sentinelhub import BBox, CRS as SCRS, to_utm_bbox
 from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 
+import geopandas as gpd
+from shapely.geometry import Polygon
 
-from app.route.common import DatafusionWorkUnit, RemoteSensingResult, __compute_raster_response
+from app.route.common import (
+    GeoTiffResponse,
+    DatafusionWorkUnit,
+    RemoteSensingResult,
+    __compute_raster_response,
+    __compute_vector_response,
+)
 
 
 log = logging.getLogger(__name__)
 
 cfg = OmegaConf.load('settings.yaml')
-router = APIRouter(prefix='/raster', tags=[list(cfg.index_name)[0]])
-# router_vector = APIRouter(prefix='/vector', tags=[cfg.index_name])
+index_name = list(cfg.index_name)[0]
+
+router = APIRouter(prefix=f'/{index_name}', tags=['index'])
 
 
 @router.post(
-    '/',
+    '/raster',
     description='Query index and return it as raster (GeoTIFF)',
+    response_class=GeoTiffResponse,
 )
-async def index_compute(body: DatafusionWorkUnit, request: Request):
+async def index_compute_raster(body: DatafusionWorkUnit, request: Request):
     log.info(f'Creating index for {body}')
     try:
-        result = __provide(body, request)
-        return __compute_raster_response(result, body, request)
+        raster_result = __provide_raster(body, request)
+        return __compute_raster_response(raster_result, body, request)[0]
     except AssertionError as e:
         raise HTTPException(
             status_code=400,
@@ -31,35 +42,38 @@ async def index_compute(body: DatafusionWorkUnit, request: Request):
         )
 
 
-# @router_vector.post(
-#    '/',
-#     description='Query index along a vector (e.g. a buffered street), return it as vector (GeoJSON)',
-# )
-# async def index_compute_as_vector(body: DatafusionWorkUnit, request: Request):
-#     log.info(f'Creating index for {body}')
+@router.post(
+    '/vector',
+    description='Query index and return it as vector (GeoJSON)',
+    response_class=JSONResponse,
+)
+async def index_compute_vector(body: DatafusionWorkUnit, request: Request):
+    log.info(f'Creating index for {body}')
 
-#     # dummy for random OSM vector FIXME  make as json input
-#     TEST_vector = gpd.GeoDataFrame(
-#             {'name': ['poly1', 'poly2'],
-#             'geometry': [
-#                 Polygon(((8.8, 49.40), (8.60, 49.415), (8.70, 49.40), (8.70, 49.40))),
-#                 Polygon(((8.8, 49.38), (8.60, 49.36), (8.70, 49.39), (8.70, 49.36))),
-#          ]}, crs=None)
+    # dummy for random OSM vector FIXME  make as json input
+    vector = gpd.GeoDataFrame(
+        {
+            'name': ['poly1', 'poly2'],
+            'geometry': [
+                Polygon(((8.8, 49.40), (8.60, 49.415), (8.70, 49.40), (8.70, 49.40))),
+                Polygon(((8.8, 49.38), (8.60, 49.36), (8.70, 49.39), (8.70, 49.36))),
+            ],
+        },
+        crs=None,
+    )
 
-#     try:
-#         result = __provide(body, request)
-#         result = __compute_raster_response(result, body, request)
-#         result = aggregate_raster_response(result, TEST_vector)
-#         return result
+    try:
+        raster_result = __provide_raster(body, request)
+        return __compute_vector_response(raster_result, body, vector, request)[0]
 
-#     except AssertionError as e:
-#             raise HTTPException(
-#                 status_code=400,
-#                 detail=str(e),
-#             )
+    except AssertionError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
 
 
-def __provide(body: DatafusionWorkUnit, request: Request) -> RemoteSensingResult:
+def __provide_raster(body: DatafusionWorkUnit, request: Request) -> RemoteSensingResult:
     bbox = to_utm_bbox(BBox(bbox=body.area_coords, crs=SCRS.WGS84))
     imagery_store = request.app.state.imagery_store
 
