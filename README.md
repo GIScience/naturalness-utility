@@ -30,9 +30,9 @@ Run `poetry run pre-commit install` to activate them.
 
 
 ## Run
-Set project root as working directory: `export PYTHONPATH="datafusion:$PYTHONPATH"`
-
-...
+Set project root as working directory: `export PYTHONPATH="datafusion:$PYTHONPATH"`\
+Setup your credentials in `.env`\
+Query NDVI imagery for a default AOI and default time span via `python app/api.py`\
 
 
 ## Docker
@@ -44,5 +44,4 @@ docker run --publish 8000:8000  --env-file .env heigit/datafusion:devel
 
 
 Then head to the link above. Populate the .env file using the .env_template.
-
 
