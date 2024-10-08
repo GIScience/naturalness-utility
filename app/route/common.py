@@ -32,7 +32,7 @@ class RemoteSensingResult:
     area_coords: Tuple[float, float, float, float]
 
 
-class DatafusionWorkUnit(BaseModel):
+class DatafusionWorkUnit(BaseModel):  # TODO replace BaseModel
     """Datafusion area of interest."""
 
     area_coords: Tuple[
@@ -61,6 +61,12 @@ class DatafusionWorkUnit(BaseModel):
         description='Save the data to disk [True, False]',
         examples=[True],
         default=True,
+    )
+    vector_path: Optional[str] = Field(
+        title='Vector data',
+        description='Path to vector data in GeoJSON format',
+        examples=['./test/test_data/test_vector.geojson'],
+        default='./test/test_data/test_vector.geojson',
     )
 
     @model_validator(mode='after')
@@ -99,11 +105,11 @@ def __compute_raster_response(
         media_type='image/geotiff',
         filename=f'{file_uuid}.tiff',
         background=BackgroundTask(unlink),
-    ), file_path
+    ), file_path  # TODO make file_path as part of GeoTif1fResponse class
 
 
 def __compute_vector_response(
-    raster_result: RemoteSensingResult, body: DatafusionWorkUnit, vector: gpd.GeoDataFrame, request: Request
+    raster_result: RemoteSensingResult, body: DatafusionWorkUnit, request: Request
 ) -> JSONResponse:
     file_uuid = uuid.uuid4()
     file_path = Path(f'/tmp/{file_uuid}.json')
@@ -112,7 +118,7 @@ def __compute_vector_response(
         file_path.unlink()
 
     raster_path = __compute_raster_response(raster_result, body, request)[1]
-    vector_result = aggregate_raster_response(raster_path, vector)
+    vector_result = aggregate_raster_response(raster_path, body.vector_path)
     with open(file_path, 'w') as dst:
         json.dump(vector_result, dst)
 
@@ -125,18 +131,23 @@ def __compute_vector_response(
     ), file_path
 
 
-def aggregate_raster_response(raster_path: str, df_vector: gpd.GeoDataFrame):
+def aggregate_raster_response(raster_path: str, vector_path: str):
     cfg = OmegaConf.load('settings.yaml')
     index_name = list(cfg.index_name)[0]
+
+    df_vector = gpd.read_file(vector_path)
+
     with rio.open(raster_path, crs='EPSG:4326') as src:
         raster_rescaled = src.read(1)
 
         if index_name == 'ndvi':
             raster_rescaled[raster_rescaled < 0] = 0
 
-        ndvi_stats_per_poly = zonal_stats(df_vector, raster_rescaled, affine=src.transform, stats='mean min max')
+        ndvi_stats_per_poly = zonal_stats(
+            df_vector.geometry, raster_rescaled, affine=src.transform, stats='mean min max'
+        )
         df_vector['index_mean'] = [x['mean'] for x in ndvi_stats_per_poly]
         df_vector['index_min'] = [x['min'] for x in ndvi_stats_per_poly]
         df_vector['index_max'] = [x['max'] for x in ndvi_stats_per_poly]
 
-    return df_vector.to_json()
+    return df_vector.to_json(na='keep')

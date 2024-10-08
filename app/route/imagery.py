@@ -5,9 +5,6 @@ from sentinelhub import BBox, CRS as SCRS, to_utm_bbox
 from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 
-import geopandas as gpd
-from shapely.geometry import Polygon
-
 from app.route.common import (
     GeoTiffResponse,
     DatafusionWorkUnit,
@@ -50,21 +47,9 @@ async def index_compute_raster(body: DatafusionWorkUnit, request: Request):
 async def index_compute_vector(body: DatafusionWorkUnit, request: Request):
     log.info(f'Creating index for {body}')
 
-    # dummy for random OSM vector FIXME  make as json input
-    vector = gpd.GeoDataFrame(
-        {
-            'name': ['poly1', 'poly2'],
-            'geometry': [
-                Polygon(((8.8, 49.40), (8.60, 49.415), (8.70, 49.40), (8.70, 49.40))),
-                Polygon(((8.8, 49.38), (8.60, 49.36), (8.70, 49.39), (8.70, 49.36))),
-            ],
-        },
-        crs=None,
-    )
-
     try:
         raster_result = __provide_raster(body, request)
-        return __compute_vector_response(raster_result, body, vector, request)[0]
+        return __compute_vector_response(raster_result, body, request)[0]
 
     except AssertionError as e:
         raise HTTPException(

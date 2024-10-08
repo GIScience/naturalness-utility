@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "TEST_vector",
+"features": [
+        { "type": "Feature", "properties": { }, "geometry": { "type": "Point", "coordinates": [ 7.381, 47.511 ] } },
+        { "type": "Feature", "properties": { }, "geometry": { "type": "LineString", "coordinates": [ [ 7.381, 47.511 ], [ 7.385, 47.511 ], [ 7.38, 47.51 ], [ 7.385, 47.51 ] ] } },
+        { "type": "Feature", "properties": { }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 7.384, 47.517 ], [ 7.385, 47.515 ], [ 7.38, 47.52 ], [ 7.385, 47.5 ], [ 7.384, 47.517 ] ] ] } }
+    ]
+}
