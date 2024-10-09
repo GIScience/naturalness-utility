@@ -8,8 +8,8 @@ from omegaconf import OmegaConf
 import uvicorn
 from fastapi import FastAPI
 
-from datafusion.imagery_store_operator import resolve_imagery_store
 from app.route import imagery, health
+from datafusion.imagery_store_operator import resolve_imagery_store
 
 
 ROOT_PATH = Path(os.path.abspath(__file__)).parent.parent
@@ -39,8 +39,9 @@ async def configure_dependencies(app: FastAPI):
 
 
 app = FastAPI(lifespan=configure_dependencies)
-app.include_router(imagery.router)
 app.include_router(health.router)
+app.include_router(imagery.router)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=log_level.upper())
