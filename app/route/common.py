@@ -144,9 +144,10 @@ def aggregate_raster_response(raster_path: str, vector_path: str):
             raster_rescaled[raster_rescaled < 0] = 0
 
         ndvi_stats_per_poly = zonal_stats(
-            df_vector.geometry, raster_rescaled, affine=src.transform, stats='mean min max'
+            df_vector.geometry, raster_rescaled, affine=src.transform, stats='mean median min max'
         )
         df_vector['index_mean'] = [x['mean'] for x in ndvi_stats_per_poly]
+        df_vector['index_median'] = [x['median'] for x in ndvi_stats_per_poly]
         df_vector['index_min'] = [x['min'] for x in ndvi_stats_per_poly]
         df_vector['index_max'] = [x['max'] for x in ndvi_stats_per_poly]
 
