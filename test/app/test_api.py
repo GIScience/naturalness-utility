@@ -1,6 +1,8 @@
 import io
 from datetime import datetime, timedelta
 from typing import Dict, Tuple
+import pandas as pd
+import json
 
 import numpy as np
 from omegaconf import OmegaConf
@@ -32,6 +34,7 @@ TEST_JSON_start_end = {
     ],
     'start_date': '2023-05-01',
     'end_date': '2023-06-01',
+    'vector_path': './test/test_data/test_vector.geojson',
 }
 
 TEST_JSON_no_time = {
@@ -122,13 +125,18 @@ def test_index_raster(mocked_client, request_body, expected_start_date, expected
 def test_index_vector(mocked_client, request_body, expected_start_date, expected_end_date, expected_saving):
     mocked_client.app.state.imagery_store = TestImageryStore()
 
-    response_vector = mocked_client.post(f'/{INDEX_NAME}/vector', json=request_body)
+    response = mocked_client.post(f'/{INDEX_NAME}/vector', json=request_body)
+    response_data = response.json()
+    response_data = pd.json_normalize(json.loads(response_data)['features'])
 
-    assert response_vector.status_code == 200
-    assert response_vector.headers['content-type'] == 'application/json'
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/json'
     assert mocked_client.app.state.imagery_store.last_start_date == expected_start_date
     assert mocked_client.app.state.imagery_store.last_end_date == expected_end_date
     assert mocked_client.app.state.imagery_store.save_data == expected_saving
+
+    assert response_data['properties.index_mean'].all() > 0.0
+    assert response_data['properties.index_max'].all() <= 1.0
 
 
 def test_errorneous_json(mocked_client):
