@@ -76,9 +76,7 @@ class DatafusionWorkUnit(BaseModel):  # TODO replace BaseModel
         return self
 
 
-def __compute_raster_response(
-    raster_result: RemoteSensingResult, body: DatafusionWorkUnit, request: Request
-) -> GeoTiffResponse:
+def __compute_raster_response(raster_result: RemoteSensingResult, body: DatafusionWorkUnit) -> GeoTiffResponse:
     file_uuid = uuid.uuid4()
     file_path = Path(f'/tmp/{file_uuid}.tiff')
 
@@ -96,7 +94,7 @@ def __compute_raster_response(
         crs=CRS.from_string('EPSG:4326'),
         nodata=None,
     ) as dst:
-        dst.write(raster_result.index_data[:, :, 0], 1)
+        dst.write(raster_result.index_data[:, :], 1)
 
     log.info(f'Finished for {body}')
 
@@ -105,7 +103,7 @@ def __compute_raster_response(
         media_type='image/geotiff',
         filename=f'{file_uuid}.tiff',
         background=BackgroundTask(unlink),
-    ), file_path  # TODO make file_path as part of GeoTif1fResponse class
+    )
 
 
 def __compute_vector_response(
@@ -117,8 +115,8 @@ def __compute_vector_response(
     def unlink():
         file_path.unlink()
 
-    raster_path = __compute_raster_response(raster_result, body, request)[1]
-    vector_result = aggregate_raster_response(raster_path, body.vector_path)
+    raster = __compute_raster_response(raster_result, body)
+    vector_result = aggregate_raster_response(raster.path, body.vector_path)
     with open(file_path, 'w') as dst:
         json.dump(vector_result, dst)
 
@@ -128,7 +126,7 @@ def __compute_vector_response(
         content=vector_result,
         media_type='application/json',
         background=BackgroundTask(unlink),
-    ), file_path
+    )
 
 
 def aggregate_raster_response(raster_path: str, vector_path: str):

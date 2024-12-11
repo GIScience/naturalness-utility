@@ -2,7 +2,7 @@ from pathlib import Path
 import logging
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple
+from typing import Tuple
 from omegaconf import DictConfig
 from sentinelhub import (
     CRS,
@@ -30,7 +30,7 @@ class ImageryStore(ABC):
         end_date: str,
         resolution: int = 10,
         save_data: bool = False,
-    ) -> Tuple[Dict[str, np.ndarray], Tuple[int, int]]:
+    ) -> Tuple[np.ndarray, Tuple[int, int]]:
         pass
 
 
@@ -57,7 +57,7 @@ class SentinelHubOperator(ImageryStore):
         end_date: str,
         resolution: int = 10,
         save_data: bool = False,
-    ) -> tuple[Dict[str, np.ndarray], tuple[int, int]]:
+    ) -> tuple[np.ndarray, tuple[int, int]]:
         """
         returns images as numpy array in shape [height, width, channels]
         """

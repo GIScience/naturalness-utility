@@ -1,18 +1,20 @@
+import datetime
 import logging.config
+from typing import Tuple
+
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from omegaconf import OmegaConf
-from sentinelhub import BBox, CRS as SCRS, to_utm_bbox
-from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
 
 from app.route.common import (
     GeoTiffResponse,
     DatafusionWorkUnit,
-    RemoteSensingResult,
     __compute_raster_response,
     __compute_vector_response,
+    RemoteSensingResult,
 )
-
+from datafusion.imagery_store_operator import ImageryStore
 
 log = logging.getLogger(__name__)
 
@@ -29,14 +31,14 @@ router = APIRouter(prefix=f'/{index_name}', tags=['index'])
 )
 async def index_compute_raster(body: DatafusionWorkUnit, request: Request):
     log.info(f'Creating index for {body}')
-    try:
-        raster_result = __provide_raster(body, request)
-        return __compute_raster_response(raster_result, body, request)[0]
-    except AssertionError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e),
-        )
+
+    raster_result = __provide_raster(
+        bbox=body.area_coords,
+        imagery_store=request.app.state.imagery_store,
+        start_date=body.start_date,
+        end_date=body.end_date,
+    )
+    return __compute_raster_response(raster_result=raster_result, body=body)
 
 
 @router.post(
@@ -47,26 +49,23 @@ async def index_compute_raster(body: DatafusionWorkUnit, request: Request):
 async def index_compute_vector(body: DatafusionWorkUnit, request: Request):
     log.info(f'Creating index for {body}')
 
-    try:
-        raster_result = __provide_raster(body, request)
-        return __compute_vector_response(raster_result, body, request)[0]
-
-    except AssertionError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e),
-        )
+    raster_result = __provide_raster(
+        bbox=body.area_coords,
+        imagery_store=request.app.state.imagery_store,
+        start_date=body.start_date,
+        end_date=body.end_date,
+    )
+    return __compute_vector_response(raster_result, body, request)
 
 
-def __provide_raster(body: DatafusionWorkUnit, request: Request) -> RemoteSensingResult:
-    bbox = to_utm_bbox(BBox(bbox=body.area_coords, crs=SCRS.WGS84))
-    imagery_store = request.app.state.imagery_store
-
+def __provide_raster(
+    bbox: Tuple[float, float, float, float],
+    imagery_store: ImageryStore,
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> RemoteSensingResult:
     index_data, (h, w) = imagery_store.imagery(
-        area_coords=bbox,
-        start_date=body.start_date.isoformat(),
-        end_date=body.end_date.isoformat(),
-        save_data=body.save_data,
+        area_coords=bbox, start_date=start_date.isoformat(), end_date=end_date.isoformat()
     )
     log.info('Query index as raster values completed')
 

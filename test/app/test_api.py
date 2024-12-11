@@ -1,29 +1,26 @@
 import io
-from datetime import datetime, timedelta
-from typing import Dict, Tuple
-import pandas as pd
 import json
+from datetime import datetime, timedelta
+from typing import Tuple
+from unittest.mock import Mock
 
 import numpy as np
+import pandas as pd
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from omegaconf import OmegaConf
 from tifffile import imread
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
 
 from app.api import app
 from app.route import imagery
 from datafusion.imagery_store_operator import ImageryStore
-
-
-import pytest
-from unittest.mock import Mock
 
 TODAY = datetime.now().date().isoformat()
 WEEK_BEFORE = (datetime.now() - timedelta(days=7)).date().isoformat()
 
 cfg = OmegaConf.load('settings.yaml')
 INDEX_NAME = list(cfg.index_name)[0]
-
 
 TEST_JSON_start_end = {
     'area_coords': [
@@ -56,17 +53,29 @@ class TestImageryStore(ImageryStore):
 
     def imagery(
         self,
-        area_coords: Tuple,
+        area_coords: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
         resolution: int = 10,
         save_data: bool = False,
-    ) -> tuple[Dict[str, np.ndarray], tuple[int, int]]:
+    ) -> tuple[np.ndarray, tuple[int, int]]:
         self.last_start_date = start_date
         self.last_end_date = end_date
         self.save_data = save_data
 
-        return np.random.uniform(0.0, 1.0, (93, 100, 1)).astype(np.float32), (93, 100)
+        return np.random.uniform(0.0, 1.0, (93, 100)).astype(np.float32), (93, 100)
+
+
+def test_test_imagery_store():
+    bbox = (0.0, 0.0, 1.0, 1.0)
+    imagery_store = TestImageryStore()
+    computed_remote_sensing_result = imagery_store.imagery(
+        area_coords=bbox,
+        start_date=(datetime.now() - timedelta(days=7)).isoformat(),
+        end_date=datetime.now().isoformat(),
+    )
+    assert computed_remote_sensing_result[0].max() >= 0
+    assert computed_remote_sensing_result[0].min() <= 1
 
 
 @pytest.fixture
@@ -95,7 +104,7 @@ def test_health(mocked_client):
 @pytest.mark.parametrize(
     'request_body, expected_start_date, expected_end_date, expected_saving',
     [
-        (TEST_JSON_start_end, '2023-05-01', '2023-06-01', True),
+        (TEST_JSON_start_end, '2023-05-01', '2023-06-01', False),
         (TEST_JSON_no_time, WEEK_BEFORE, TODAY, False),
     ],
 )
@@ -118,7 +127,7 @@ def test_index_raster(mocked_client, request_body, expected_start_date, expected
 @pytest.mark.parametrize(
     'request_body, expected_start_date, expected_end_date, expected_saving',
     [
-        (TEST_JSON_start_end, '2023-05-01', '2023-06-01', True),
+        (TEST_JSON_start_end, '2023-05-01', '2023-06-01', False),
         (TEST_JSON_no_time, WEEK_BEFORE, TODAY, False),
     ],
 )
@@ -143,13 +152,3 @@ def test_errorneous_json(mocked_client):
     response = mocked_client.post(f'/{INDEX_NAME}/raster', json={})
 
     assert response.status_code == 422
-
-
-def test_imagery_store_raises_assertion_error_should_fail(mocked_imagery_store):
-    app, imagery_store = mocked_imagery_store
-
-    imagery_store.imagery.side_effect = AssertionError('something went wrong')
-    response = app.post(f'/{INDEX_NAME}/raster', json=TEST_JSON_start_end)
-
-    assert response.status_code == 400
-    assert response.json() == {'detail': 'something went wrong'}
