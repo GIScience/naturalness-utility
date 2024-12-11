@@ -1,8 +1,9 @@
-from pathlib import Path
 import logging
-import numpy as np
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Tuple
+
+import numpy as np
 from omegaconf import DictConfig
 from sentinelhub import (
     CRS,
@@ -11,12 +12,11 @@ from sentinelhub import (
     DownloadFailedException,
     MimeType,
     SentinelHubRequest,
-    SHConfig,
     bbox_to_dimensions,
+    SHConfig,
 )
 
-from datafusion.exception import OperatorInteractionException, OperatorValidationException
-
+from naturalness.exception import OperatorInteractionException, OperatorValidationException
 
 log = logging.getLogger(__name__)
 
@@ -43,12 +43,12 @@ class SentinelHubOperator(ImageryStore):
         evalscript_name: str,
         cache_dir: Path,
     ):
-        self.config = SHConfig(**{'sh_client_id': api_id, 'sh_client_secret': api_secret})
         self.cache_dir: Path = cache_dir
         self.data_folder = self.cache_dir
         self.data_folder.mkdir(parents=True, exist_ok=True)
         self.index = index
         self.evalscript = (Path('conf') / f'{evalscript_name}.js').read_text()
+        self.config = SHConfig(**{'sh_client_id': api_id, 'sh_client_secret': api_secret})
 
     def imagery(
         self,
@@ -96,9 +96,9 @@ def resolve_imagery_store(cfg: DictConfig, cache_dir: Path) -> ImageryStore:
     evalscript_name = cfg.index_name[index].evalscript_name
 
     return SentinelHubOperator(
-        cfg.api_id,
-        cfg.api_secret,
-        index,
-        evalscript_name,
+        api_id=cfg.api_id,
+        api_secret=cfg.api_secret,
+        index=index,
+        evalscript_name=evalscript_name,
         cache_dir=cache_dir / 'imagery',
     )

@@ -14,7 +14,7 @@ from tifffile import imread
 
 from app.api import app
 from app.route import imagery
-from datafusion.imagery_store_operator import ImageryStore
+from naturalness.imagery_store_operator import ImageryStore
 
 TODAY = datetime.now().date().isoformat()
 WEEK_BEFORE = (datetime.now() - timedelta(days=7)).date().isoformat()

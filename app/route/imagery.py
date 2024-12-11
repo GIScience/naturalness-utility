@@ -9,12 +9,12 @@ from starlette.requests import Request
 
 from app.route.common import (
     GeoTiffResponse,
-    DatafusionWorkUnit,
+    NaturalnessWorkUnit,
     __compute_raster_response,
     __compute_vector_response,
     RemoteSensingResult,
 )
-from datafusion.imagery_store_operator import ImageryStore
+from naturalness.imagery_store_operator import ImageryStore
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ router = APIRouter(prefix=f'/{index_name}', tags=['index'])
     description='Query index and return it as raster (GeoTIFF)',
     response_class=GeoTiffResponse,
 )
-async def index_compute_raster(body: DatafusionWorkUnit, request: Request):
+async def index_compute_raster(body: NaturalnessWorkUnit, request: Request):
     log.info(f'Creating index for {body}')
 
     raster_result = __provide_raster(
@@ -46,7 +46,7 @@ async def index_compute_raster(body: DatafusionWorkUnit, request: Request):
     description='Query index and return it as vector (GeoJSON)',
     response_class=JSONResponse,
 )
-async def index_compute_vector(body: DatafusionWorkUnit, request: Request):
+async def index_compute_vector(body: NaturalnessWorkUnit, request: Request):
     log.info(f'Creating index for {body}')
 
     raster_result = __provide_raster(

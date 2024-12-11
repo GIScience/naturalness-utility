@@ -31,7 +31,7 @@ Run `poetry run pre-commit install` to activate them.
 
 
 ## Run
-- Set project root as working directory: `export PYTHONPATH="datafusion:$PYTHONPATH"`
+- Set project root as working directory: `export PYTHONPATH="naturalness:$PYTHONPATH"`
 - Setup your credentials in `.env`
 - Query the maximum NDVI as imagery its zonal statistics for a default AOI and time span: `python app/api.py`
 
@@ -39,8 +39,8 @@ Run `poetry run pre-commit install` to activate them.
 ## Docker
 The tool is also Dockerised. To start it, run the following commands
 ```
-docker build . --tag heigit/datafusion:devel
-docker run --publish 8000:8000  --env-file .env heigit/datafusion:devel
+docker build . --tag heigit/naturalness:devel
+docker run --publish 8000:8000  --env-file .env heigit/naturalness:devel
 ```
 
 

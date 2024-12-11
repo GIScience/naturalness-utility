@@ -9,7 +9,6 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 ## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility)
 
 ### Added
-
 - first version of a Natrualness Utility
 - API functionality with client-input parameters to define AOI and time span for which an index is calculated ([#4](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/4))
     - currently one index (max. NDVI) based on Sentinel-2 imagery is implemented

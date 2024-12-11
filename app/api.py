@@ -9,7 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.route import imagery, health
-from datafusion.imagery_store_operator import resolve_imagery_store
+from naturalness.imagery_store_operator import resolve_imagery_store
 
 
 ROOT_PATH = Path(os.path.abspath(__file__)).parent.parent
@@ -48,13 +48,13 @@ if __name__ == '__main__':
     with open(log_config) as file:
         logging.config.dictConfig(yaml.safe_load(file))
 
-    log.info('Starting Datafusion Utility')
+    log.info('Starting Naturalness Utility')
     uvicorn.run(
         'api:app',
         host='0.0.0.0',
-        port=int(os.getenv('DATAFUSION_UTILITY_API_PORT', 8000)),
+        port=int(os.getenv('NATURALNESS_UTILITY_API_PORT', 8000)),
         root_path=os.getenv('ROOT_PATH', '/'),
         log_config=log_config,
         log_level=log_level.lower(),
-        workers=int(os.getenv('DATAFUSION_UVICORN_WORKERS', 1)),
+        workers=int(os.getenv('NATURALNESS_UVICORN_WORKERS', 1)),
     )

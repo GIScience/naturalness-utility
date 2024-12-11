@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "datafusion"
+name = "naturalness"
 version = "0.1.0"
 description = "This utility provides the functionality of different indices derived from remote sensing data"
 authors = [

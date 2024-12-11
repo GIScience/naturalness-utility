@@ -1,6 +1,6 @@
 FROM python:3.11.4-bookworm
 
-ENV PACKAGE_NAME='datafusion'
+ENV PACKAGE_NAME='naturalness'
 
 RUN pip install --no-cache-dir poetry==1.8.3
 

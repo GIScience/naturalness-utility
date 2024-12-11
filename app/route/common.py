@@ -32,8 +32,8 @@ class RemoteSensingResult:
     area_coords: Tuple[float, float, float, float]
 
 
-class DatafusionWorkUnit(BaseModel):  # TODO replace BaseModel
-    """Datafusion area of interest."""
+class NaturalnessWorkUnit(BaseModel):
+    """Area of interest for naturalness index"""
 
     area_coords: Tuple[
         confloat(ge=-180, le=180), confloat(ge=-90, le=90), confloat(ge=-180, le=180), confloat(ge=-90, le=90)
@@ -70,13 +70,13 @@ class DatafusionWorkUnit(BaseModel):  # TODO replace BaseModel
     )
 
     @model_validator(mode='after')
-    def minus_week(self) -> 'DatafusionWorkUnit':
+    def minus_week(self) -> 'NaturalnessWorkUnit':
         if not self.start_date:
             self.start_date = self.end_date - timedelta(days=7)
         return self
 
 
-def __compute_raster_response(raster_result: RemoteSensingResult, body: DatafusionWorkUnit) -> GeoTiffResponse:
+def __compute_raster_response(raster_result: RemoteSensingResult, body: NaturalnessWorkUnit) -> GeoTiffResponse:
     file_uuid = uuid.uuid4()
     file_path = Path(f'/tmp/{file_uuid}.tiff')
 
@@ -107,7 +107,7 @@ def __compute_raster_response(raster_result: RemoteSensingResult, body: Datafusi
 
 
 def __compute_vector_response(
-    raster_result: RemoteSensingResult, body: DatafusionWorkUnit, request: Request
+    raster_result: RemoteSensingResult, body: NaturalnessWorkUnit, request: Request
 ) -> JSONResponse:
     file_uuid = uuid.uuid4()
     file_path = Path(f'/tmp/{file_uuid}.json')
