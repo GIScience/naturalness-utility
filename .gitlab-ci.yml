@@ -1,11 +1,62 @@
 unit_tests:
   stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   image:
-    name: python:3.11.4
+    name: python:3.11.5
+  variables:
+    PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
+  cache:
+    key: $CI_COMMIT_REF_NAME
+    paths:
+      - $PRE_COMMIT_HOME
+      - .venv
   before_script:
-    - pip install poetry
-    - poetry config virtualenvs.in-project false
-    - poetry install
-    - source `poetry env info --path`/bin/activate
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip install poetry===1.8.4
+    - poetry config virtualenvs.in-project true
+    - poetry install --with test,dev
   script:
+    - poetry run pre-commit run --all-files
     - poetry run pytest
+
+docker_build_deploy_development:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main' && $CI_PIPELINE_SOURCE == 'push'
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [ "" ]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"auth\":\"$(printf "%s:%s" "${CI_DOCKER_USER}" "${CI_DOCKER_TOKEN}" | base64 | tr -d '\n')\"}}}}" > /kaniko/.docker/config.json
+  script:
+    - >
+      /kaniko/executor \
+          --context "${CI_PROJECT_DIR}" \
+          --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+          --cache \
+          --cache-repo "${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}-cache" \
+          --cache-copy-layers \
+          --destination "${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:devel" \
+          --destination "${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:staging" \
+          --cleanup
+
+docker_build_deploy_release:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_TAG
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [ "" ]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"auth\":\"$(printf "%s:%s" "${CI_DOCKER_USER}" "${CI_DOCKER_TOKEN}" | base64 | tr -d '\n')\"}}}}" > /kaniko/.docker/config.json
+  script:
+    - >
+      /kaniko/executor \
+          --context "${CI_PROJECT_DIR}" \
+          --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+          --destination "${REGISTRY_URL}/${GROUP_NAME}/${CI_PROJECT_NAME}:${CI_COMMIT_TAG}" \
+          --cleanup

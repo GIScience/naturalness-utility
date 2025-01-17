@@ -1,12 +1,12 @@
-FROM python:3.11.4-bookworm
+FROM python:3.11.5-bookworm
 
 ENV PACKAGE_NAME='naturalness'
 
-RUN pip install --no-cache-dir poetry==1.8.3
+RUN pip install --no-cache-dir poetry==1.8.4
 
 COPY pyproject.toml poetry.lock ./
 
-RUN  poetry install --no-ansi --no-interaction --all-extras --without dev
+RUN  poetry install --no-ansi --no-interaction --all-extras --without dev,test
 
 COPY $PACKAGE_NAME $PACKAGE_NAME
 COPY app app
