@@ -1,21 +1,18 @@
-import uuid
 import logging
-from datetime import date, datetime, timedelta
+import uuid
 from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Tuple, Optional
-from omegaconf import OmegaConf
+from typing import Tuple, Optional, Set
 
+import geojson_pydantic
 import numpy as np
-import json
-import geopandas as gpd
-import rasterio as rio
+import rasterio
+from pydantic import confloat, Field, BaseModel, model_validator
 from rasterio.crs import CRS
 from rasterstats import zonal_stats
-from pydantic import confloat, Field, BaseModel, model_validator
-from starlette.requests import Request
-from starlette.responses import FileResponse, JSONResponse
 from starlette.background import BackgroundTask
+from starlette.responses import FileResponse
 
 log = logging.getLogger(__name__)
 
@@ -56,18 +53,6 @@ class NaturalnessWorkUnit(BaseModel):
         examples=['2023-06-01'],
         default=datetime.now().date(),
     )
-    save_data: Optional[bool] = Field(
-        title='Save Data',
-        description='Save the data to disk [True, False]',
-        examples=[True],
-        default=True,
-    )
-    vector_path: Optional[str] = Field(
-        title='Vector data',
-        description='Path to vector data in GeoJSON format',
-        examples=['./test/test_data/test_vector.geojson'],
-        default='./test/test_data/test_vector.geojson',
-    )
 
     @model_validator(mode='after')
     def minus_week(self) -> 'NaturalnessWorkUnit':
@@ -83,7 +68,7 @@ def __compute_raster_response(raster_result: RemoteSensingResult, body: Naturaln
     def unlink():
         file_path.unlink()
 
-    with rio.open(
+    with rasterio.open(
         file_path,
         mode='w+',
         driver='GTiff',
@@ -93,8 +78,11 @@ def __compute_raster_response(raster_result: RemoteSensingResult, body: Naturaln
         dtype=str(raster_result.index_data.dtype),
         crs=CRS.from_string('EPSG:4326'),
         nodata=None,
+        transform=rasterio.transform.from_bounds(
+            *raster_result.area_coords, width=raster_result.width, height=raster_result.height
+        ),
     ) as dst:
-        dst.write(raster_result.index_data[:, :], 1)
+        dst.write(raster_result.index_data, 1)
 
     log.info(f'Finished for {body}')
 
@@ -107,46 +95,38 @@ def __compute_raster_response(raster_result: RemoteSensingResult, body: Naturaln
 
 
 def __compute_vector_response(
-    raster_result: RemoteSensingResult, body: NaturalnessWorkUnit, request: Request
-) -> JSONResponse:
-    file_uuid = uuid.uuid4()
-    file_path = Path(f'/tmp/{file_uuid}.json')
+    stats: Set[str], raster_result: RemoteSensingResult, body: NaturalnessWorkUnit
+) -> geojson_pydantic.Feature:
+    xmin, ymin, xmax, ymax = body.area_coords
+    aoi = geojson_pydantic.Polygon(
+        type='Polygon', coordinates=[[[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax], [xmin, ymin]]]
+    )
 
-    def unlink():
-        file_path.unlink()
-
-    raster = __compute_raster_response(raster_result, body)
-    vector_result = aggregate_raster_response(raster.path, body.vector_path)
-    with open(file_path, 'w') as dst:
-        json.dump(vector_result, dst)
+    vector_result = aggregate_raster_response(
+        geometry=aoi,
+        raster_data=raster_result.index_data,
+        stats=stats,
+        affine=rasterio.transform.from_bounds(
+            *raster_result.area_coords, width=raster_result.width, height=raster_result.height
+        ),
+    )
 
     log.info(f'Finished for {body}')
 
-    return JSONResponse(
-        content=vector_result,
-        media_type='application/json',
-        background=BackgroundTask(unlink),
+    return vector_result
+
+
+def aggregate_raster_response(
+    stats: Set[str], geometry: geojson_pydantic.Polygon, raster_data: np.ndarray, affine: rasterio.Affine
+) -> geojson_pydantic.Feature:
+    geojson = zonal_stats(vectors=geometry, raster=raster_data, stats=stats, affine=affine, geojson_out=True)
+
+    return_element = geojson[0]
+
+    result = geojson_pydantic.Feature(
+        type='Feature',
+        geometry=geojson_pydantic.Polygon(type='Polygon', coordinates=return_element['geometry']['coordinates']),
+        properties=return_element['properties'],
     )
 
-
-def aggregate_raster_response(raster_path: str, vector_path: str):
-    cfg = OmegaConf.load('settings.yaml')
-    index_name = list(cfg.index_name)[0]
-
-    df_vector = gpd.read_file(vector_path)
-
-    with rio.open(raster_path, crs='EPSG:4326') as src:
-        raster_rescaled = src.read(1)
-
-        if index_name == 'ndvi':
-            raster_rescaled[raster_rescaled < 0] = 0
-
-        ndvi_stats_per_poly = zonal_stats(
-            df_vector.geometry, raster_rescaled, affine=src.transform, stats='mean median min max'
-        )
-        df_vector['index_mean'] = [x['mean'] for x in ndvi_stats_per_poly]
-        df_vector['index_median'] = [x['median'] for x in ndvi_stats_per_poly]
-        df_vector['index_min'] = [x['min'] for x in ndvi_stats_per_poly]
-        df_vector['index_max'] = [x['max'] for x in ndvi_stats_per_poly]
-
-    return df_vector.to_json(na='keep')
+    return result

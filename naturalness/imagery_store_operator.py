@@ -1,10 +1,10 @@
 import logging
 from abc import ABC, abstractmethod
+from enum import StrEnum
 from pathlib import Path
 from typing import Tuple
 
 import numpy as np
-from omegaconf import DictConfig
 from sentinelhub import (
     CRS,
     BBox,
@@ -21,16 +21,21 @@ from naturalness.exception import OperatorInteractionException, OperatorValidati
 log = logging.getLogger(__name__)
 
 
+class Index(StrEnum):
+    NDVI = 'NDVI'
+
+
 class ImageryStore(ABC):
     @abstractmethod
     def imagery(
         self,
+        index: Index,
         area_coords: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
         resolution: int = 10,
-        save_data: bool = False,
     ) -> Tuple[np.ndarray, Tuple[int, int]]:
+        """Returns images as numpy array in shape [height, width, channels]"""
         pass
 
 
@@ -39,28 +44,23 @@ class SentinelHubOperator(ImageryStore):
         self,
         api_id: str,
         api_secret: str,
-        index: str,
-        evalscript_name: str,
+        script_path: Path,
         cache_dir: Path,
     ):
-        self.cache_dir: Path = cache_dir
-        self.data_folder = self.cache_dir
-        self.data_folder.mkdir(parents=True, exist_ok=True)
-        self.index = index
-        self.evalscript = (Path('conf') / f'{evalscript_name}.js').read_text()
         self.config = SHConfig(**{'sh_client_id': api_id, 'sh_client_secret': api_secret})
+        self.evalscripts = {index: (script_path / f'{index}_evalscript.js').read_text() for index in Index}
+
+        self.data_folder = cache_dir
+        self.data_folder.mkdir(parents=True, exist_ok=True)
 
     def imagery(
         self,
+        index: Index,
         area_coords: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
         resolution: int = 10,
-        save_data: bool = False,
     ) -> tuple[np.ndarray, tuple[int, int]]:
-        """
-        returns images as numpy array in shape [height, width, channels]
-        """
         bbox = BBox(bbox=area_coords, crs=CRS.WGS84)
         bbox_width, bbox_height = bbox_to_dimensions(bbox, resolution=resolution)
 
@@ -69,7 +69,7 @@ class SentinelHubOperator(ImageryStore):
 
         request = SentinelHubRequest(
             data_folder=str(self.data_folder),
-            evalscript=self.evalscript,
+            evalscript=self.evalscripts[index],
             input_data=[
                 SentinelHubRequest.input_data(
                     data_collection=DataCollection.SENTINEL2_L2A,
@@ -78,27 +78,14 @@ class SentinelHubOperator(ImageryStore):
                 ),
             ],
             responses=[
-                SentinelHubRequest.output_response(f'{self.index}', MimeType.TIFF),
+                SentinelHubRequest.output_response(f'{index}', MimeType.TIFF),
             ],
             bbox=bbox,
             size=(bbox_width, bbox_height),
             config=self.config,
         )
         try:
-            return request.get_data(save_data=save_data)[0], (bbox_height, bbox_width)
+            return request.get_data(save_data=True)[0], (bbox_height, bbox_width)
         except DownloadFailedException:
             log.exception('Download of remote sensing scenes failed')
             raise OperatorInteractionException('SentinelHub operator interaction not possible.')
-
-
-def resolve_imagery_store(cfg: DictConfig, cache_dir: Path) -> ImageryStore:
-    index = list(cfg.index_name)[0]
-    evalscript_name = cfg.index_name[index].evalscript_name
-
-    return SentinelHubOperator(
-        api_id=cfg.api_id,
-        api_secret=cfg.api_secret,
-        index=index,
-        evalscript_name=evalscript_name,
-        cache_dir=cache_dir / 'imagery',
-    )

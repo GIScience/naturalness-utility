@@ -1,48 +1,40 @@
 # Naturalness-utility
 
-Small utility with the functionality to return spectral indices (e.g. the NDVI) derived from remote sensing data (e.g. Sentinel-2 or Planet imagery). The utility can be used by other utilitlies, such as for walkability and bikeability.
+Small utility with the functionality to return spectral indices (e.g. the NDVI) derived from remote sensing data.
 
-The structure of this project is similar to the `lulc-utility`, such as similar example AOI, same configuration of pre-commit hooks and Continuous Integration
-
-**Note** A poetry environment is used, initalize the environment via `poetry install`  which installs all dependencies from `poetry.lock` file
-
+The structure of this project is similar to
+the [LULC Utility](https://gitlab.heigit.org/climate-action/utilities/lulc-utility).
 
 ## Indices
 
-
 ### NDVI
-The aim is to calculate the urban naturalness, e.g. along streets. Thus, the maximum NDVI is returned by API endpoints as a raster- and vector-based calculation of the greenness. The AOI and timespan can be defined by the user as well as the input vector data (`geojson`). This `geojson` file is used to aggregate the NDVI (from the raster file) based on an user-defined vector (Point, Line, Polygon). \
-The aggregated vector file (`json`), returned from the API, contains zonal statistics of the index (e.g. NDVI), while the returned raster file (`tiff`) is a scene of the maximum NDVI for the given time and area.\
-A template of the `geojson` file can be found here: `./test/test_data/test_vector.geojson`.
 
-
-### Further indices
-...
-
+The utility returns the maximum NDVI over a user defined time period within a user defined area as GeoTiff raster via
+the `raster` endpoint.
+In addition, an aggregation of NDVI values to simple feature geometries is possible via the `vector`-endpoint.
 
 ## Development
+
+## Setup
+
+[Poetry](https://python-poetry.org/) is used as dependency management.
+Initalize the environment via `poetry install`  which installs all dependencies from `poetry.lock` file.
+
 Note that the repository supports pre commit hooks defined in the `.pre-commit-config.yaml` file.
-For the description of each hook visit the documentation of:
-
-- git pre-commit hooks
-- ruff pre-commit hooks
-
 Run `poetry run pre-commit install` to activate them.
 
-
 ## Run
-- Set project root as working directory: `export PYTHONPATH="naturalness:$PYTHONPATH"`
-- Setup your credentials in `.env`
-- Query the maximum NDVI as imagery its zonal statistics for a default AOI and time span: `python app/api.py`
 
+- Set project root as working directory: `export PYTHONPATH="naturalness:$PYTHONPATH"`
+- Copy the [.env_template](.env_template) file to `.env` and add the required credentials
+- Run`python app/api.py` to start the utility
 
 ## Docker
-The tool is also Dockerised. To start it, run the following commands
+
+The tool is also Dockerised.
+To start it, run the following commands
+
 ```
-docker build . --tag heigit/naturalness:devel
-docker run --publish 8000:8000  --env-file .env heigit/naturalness:devel
+docker build . --tag repo.heigit.org/climate-action/naturalness:devel
+docker run --publish 8000:8000  --env-file .env repo.heigit.org/climate-action//naturalness:devel
 ```
-
-
-Then head to the link above. Populate the .env file using the .env_template.
-
