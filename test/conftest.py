@@ -30,3 +30,27 @@ def mocked_client() -> TestClient:
         app.state.imagery_store = TestImageryStore()
 
         yield client
+
+
+@pytest.fixture
+def default_vector_request() -> dict:
+    return {
+        'body': {
+            'area_coords': [0, 0, 2, 2],
+            'end_date': '2023-06-01',
+        },
+        'aggregation_stats': ['max'],
+        'vectors': {
+            'type': 'FeatureCollection',
+            'features': [
+                {
+                    'type': 'Feature',
+                    'properties': {},
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]],
+                    },
+                }
+            ],
+        },
+    }

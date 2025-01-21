@@ -54,79 +54,41 @@ def test_index_raster(mocked_client, index):
 
 
 @pytest.mark.parametrize('index', Index)
-def test_index_vector(mocked_client, index):
-    request_body = {
-        'body': {
-            'area_coords': [
-                0,
-                0,
-                1,
-                1,
-            ],
-            'end_date': '2023-06-01',
-        },
-        'aggregation_stats': ['max'],
-    }
-
-    response = mocked_client.post(f'/{index}/vector', json=request_body)
+def test_index_vector(mocked_client, index, default_vector_request):
+    response = mocked_client.post(f'/{index}/vector', json=default_vector_request)
 
     assert response.status_code == 200
     assert response.headers['content-type'] == 'application/json'
 
-    response_data = response.json()
+    response_feature = response.json()['features'][0]
 
-    assert 0.0 <= response_data['properties']['max'] <= 1.0
-    assert response_data['geometry'] == {
+    assert 0.0 <= response_feature['properties']['max'] <= 1.0
+    assert response_feature['geometry'] == default_vector_request['vectors']['features'][0]['geometry']
+
+
+@pytest.mark.parametrize('index', Index)
+def test_index_vector_multi_agg(mocked_client, index, default_vector_request):
+    default_vector_request.update({'aggregation_stats': ['max', 'min']})
+
+    response = mocked_client.post(f'/{index}/vector', json=default_vector_request)
+
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/json'
+
+    response_feature = response.json()['features'][0]
+
+    assert 0.0 <= response_feature['properties']['max'] <= 1.0
+    assert 0.0 <= response_feature['properties']['min'] <= 1.0
+    assert response_feature['geometry'] == {
         'type': 'Polygon',
         'coordinates': [[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]],
     }
 
 
 @pytest.mark.parametrize('index', Index)
-def test_index_vector_multi_agg(mocked_client, index):
-    request_body = {
-        'body': {
-            'area_coords': [
-                0,
-                0,
-                1,
-                1,
-            ],
-            'end_date': '2023-06-01',
-        },
-        'aggregation_stats': ['max', 'min'],
-    }
+def test_index_vector_raise_exception_invalid_summary(mocked_client, index, default_vector_request):
+    default_vector_request.update({'aggregation_stats': ['min', 'foo']})
 
-    response = mocked_client.post(f'/{index}/vector', json=request_body)
-
-    assert response.status_code == 200
-    assert response.headers['content-type'] == 'application/json'
-
-    response_data = response.json()
-
-    assert 0.0 <= response_data['properties']['max'] <= 1.0
-    assert 0.0 <= response_data['properties']['min'] <= 1.0
-    assert response_data['geometry'] == {
-        'type': 'Polygon',
-        'coordinates': [[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]],
-    }
-
-
-@pytest.mark.parametrize('index', Index)
-def test_index_vector_raise_exception_invalid_summary(mocked_client, index):
-    request_body = {
-        'body': {
-            'area_coords': [
-                0,
-                0,
-                1,
-                1,
-            ],
-            'end_date': '2023-06-01',
-        },
-        'aggregation_stats': ['min', 'foo'],
-    }
-
-    response = mocked_client.post(f'/{index}/vector', json=request_body)
+    response = mocked_client.post(f'/{index}/vector', json=default_vector_request)
     assert response.status_code == 422
     assert response.text == '{"detail":"Summary statistic {\'foo\'} not supported."}'
