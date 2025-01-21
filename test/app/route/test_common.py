@@ -35,26 +35,37 @@ def test_naturalness_work_unit_infer_date_start():
 
 
 def test_aggregate_raster_response():
-    area_coords = (8.65, 49.38, 8.75, 49.41)
-    xmin, ymin, xmax, ymax = area_coords
-    test_aoi = geojson_pydantic.Polygon(
-        type='Polygon', coordinates=[[[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax], [xmin, ymin]]]
-    )
+    area_coords = (0.0, 0.0, 2.0, 2.0)
+    test_geometries = [
+        geojson_pydantic.Polygon(
+            type='Polygon', coordinates=[[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]]
+        ),
+        geojson_pydantic.Polygon(
+            type='Polygon', coordinates=[[[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 2.0], [0.0, 0.0]]]
+        ),
+    ]
+    data = np.ones(shape=(20, 20))
+    data[10:, :10] = 0.5
 
     test_raster_result = RemoteSensingResult(
-        index_data=np.round(np.random.rand(331, 727), decimals=4),
-        height=331,
-        width=727,
+        index_data=data,
+        height=data.shape[0],
+        width=data.shape[1],
         area_coords=area_coords,
     )
 
     geom = aggregate_raster_response(
-        geometry=test_aoi,
-        raster_data=test_raster_result.index_data,
         stats={'max'},
+        geometries=test_geometries,
+        raster_data=test_raster_result.index_data,
         affine=rasterio.transform.from_bounds(
             *test_raster_result.area_coords, width=test_raster_result.width, height=test_raster_result.height
         ),
     )
 
-    assert geom.properties['max'] == test_raster_result.index_data.max()
+    assert isinstance(geom, geojson_pydantic.FeatureCollection)
+    for g_in, g_out in zip(test_geometries, geom):
+        assert g_in == g_out.geometry
+
+    assert geom[0].properties['max'] == 0.5
+    assert geom[1].properties['max'] == 1.0

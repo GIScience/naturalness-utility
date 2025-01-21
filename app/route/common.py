@@ -48,8 +48,7 @@ class NaturalnessWorkUnit(BaseModel):
     )
     end_date: date = Field(
         title='End Date',
-        description='Upper bound (inclusive) of remote sensing imagery acquisition date (UTC).'
-        "Defaults to today's date",
+        description="Upper bound (inclusive) of remote sensing imagery acquisition date (UTC). Defaults to today's date",
         examples=['2023-06-01'],
         default=datetime.now().date(),
     )
@@ -95,38 +94,23 @@ def __compute_raster_response(raster_result: RemoteSensingResult, body: Naturaln
 
 
 def __compute_vector_response(
-    stats: Set[str], raster_result: RemoteSensingResult, body: NaturalnessWorkUnit
-) -> geojson_pydantic.Feature:
-    xmin, ymin, xmax, ymax = body.area_coords
-    aoi = geojson_pydantic.Polygon(
-        type='Polygon', coordinates=[[[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax], [xmin, ymin]]]
-    )
-
+    stats: Set[str], vectors: geojson_pydantic.FeatureCollection, raster_result: RemoteSensingResult
+) -> geojson_pydantic.FeatureCollection:
     vector_result = aggregate_raster_response(
-        geometry=aoi,
-        raster_data=raster_result.index_data,
         stats=stats,
+        geometries=vectors,
+        raster_data=raster_result.index_data,
         affine=rasterio.transform.from_bounds(
             *raster_result.area_coords, width=raster_result.width, height=raster_result.height
         ),
     )
 
-    log.info(f'Finished for {body}')
-
     return vector_result
 
 
 def aggregate_raster_response(
-    stats: Set[str], geometry: geojson_pydantic.Polygon, raster_data: np.ndarray, affine: rasterio.Affine
-) -> geojson_pydantic.Feature:
-    geojson = zonal_stats(vectors=geometry, raster=raster_data, stats=stats, affine=affine, geojson_out=True)
+    stats: Set[str], geometries: geojson_pydantic.FeatureCollection, raster_data: np.ndarray, affine: rasterio.Affine
+) -> geojson_pydantic.FeatureCollection:
+    geojson = zonal_stats(vectors=geometries, raster=raster_data, stats=stats, affine=affine, geojson_out=True)
 
-    return_element = geojson[0]
-
-    result = geojson_pydantic.Feature(
-        type='Feature',
-        geometry=geojson_pydantic.Polygon(type='Polygon', coordinates=return_element['geometry']['coordinates']),
-        properties=return_element['properties'],
-    )
-
-    return result
+    return geojson_pydantic.FeatureCollection(type='FeatureCollection', features=geojson)

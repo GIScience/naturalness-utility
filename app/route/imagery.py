@@ -46,8 +46,12 @@ async def index_compute_raster(index: Index, body: NaturalnessWorkUnit, request:
     response_class=JSONResponse,
 )
 async def index_compute_vector(
-    index: Index, aggregation_stats: List[str], body: NaturalnessWorkUnit, request: Request
-) -> geojson_pydantic.Feature:
+    index: Index,
+    aggregation_stats: List[str],
+    vectors: geojson_pydantic.FeatureCollection,
+    body: NaturalnessWorkUnit,
+    request: Request,
+) -> geojson_pydantic.FeatureCollection:
     log.info(f'Creating index for {body}')
 
     invalid_stats = set(aggregation_stats).difference(utils.VALID_STATS)
@@ -64,7 +68,11 @@ async def index_compute_vector(
         end_date=body.end_date,
         imagery_store=request.app.state.imagery_store,
     )
-    return __compute_vector_response(raster_result=raster_result, stats=aggregation_stats, body=body)
+
+    vector_response = __compute_vector_response(stats=aggregation_stats, vectors=vectors, raster_result=raster_result)
+    log.info(f'Finished for {body}')
+
+    return vector_response
 
 
 def __provide_raster(

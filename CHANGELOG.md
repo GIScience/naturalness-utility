@@ -14,6 +14,5 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
   calculated ([#4](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/4))
     - currently one index (max. NDVI) based on Sentinel-2 imagery is implemented
     - API endpoints return an index (max. NDVI) as a `raster` file and
-    - its zonal statistics transform the user-defined bbox into a Polygon and aggregate the given statistic for it (
-      vector based calculation: [#9](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/9))
+    - its zonal statistics aggregate the given index for the geometries in the user-provided FeatureCollection
 
