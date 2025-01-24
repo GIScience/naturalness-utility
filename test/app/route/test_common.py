@@ -5,6 +5,7 @@ import numpy as np
 import rasterio
 
 from app.route.common import RemoteSensingResult, aggregate_raster_response, NaturalnessWorkUnit
+from naturalness.imagery_store_operator import Index
 
 
 def test_naturalness_work_unit():
@@ -36,14 +37,29 @@ def test_naturalness_work_unit_infer_date_start():
 
 def test_aggregate_raster_response():
     area_coords = (0.0, 0.0, 2.0, 2.0)
-    test_geometries = [
-        geojson_pydantic.Polygon(
-            type='Polygon', coordinates=[[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]]
-        ),
-        geojson_pydantic.Polygon(
-            type='Polygon', coordinates=[[[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 2.0], [0.0, 0.0]]]
-        ),
-    ]
+    test_geometries = geojson_pydantic.FeatureCollection.model_validate(
+        {
+            'type': 'FeatureCollection',
+            'features': [
+                {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]],
+                    },
+                    'properties': {},
+                },
+                {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [[[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 2.0], [0.0, 0.0]]],
+                    },
+                    'properties': {},
+                },
+            ],
+        }
+    )
     data = np.ones(shape=(20, 20))
     data[10:, :10] = 0.5
 
@@ -55,8 +71,9 @@ def test_aggregate_raster_response():
     )
 
     geom = aggregate_raster_response(
-        stats={'max'},
+        stats=['max'],
         geometries=test_geometries,
+        index=Index.NDVI,
         raster_data=test_raster_result.index_data,
         affine=rasterio.transform.from_bounds(
             *test_raster_result.area_coords, width=test_raster_result.width, height=test_raster_result.height
@@ -65,7 +82,7 @@ def test_aggregate_raster_response():
 
     assert isinstance(geom, geojson_pydantic.FeatureCollection)
     for g_in, g_out in zip(test_geometries, geom):
-        assert g_in == g_out.geometry
+        assert g_in.geometry == g_out.geometry
 
     assert geom[0].properties['max'] == 0.5
     assert geom[1].properties['max'] == 1.0

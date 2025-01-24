@@ -37,7 +37,7 @@ async def index_compute_raster(index: Index, body: NaturalnessWorkUnit, request:
         end_date=body.end_date,
         imagery_store=request.app.state.imagery_store,
     )
-    return __compute_raster_response(raster_result=raster_result, body=body)
+    return __compute_raster_response(raster_result=raster_result, body=body, index=index)
 
 
 @router.post(
@@ -69,7 +69,12 @@ async def index_compute_vector(
         imagery_store=request.app.state.imagery_store,
     )
 
-    vector_response = __compute_vector_response(stats=aggregation_stats, vectors=vectors, raster_result=raster_result)
+    vector_response = __compute_vector_response(
+        stats=aggregation_stats,
+        vectors=vectors,
+        index=index,
+        raster_result=raster_result,
+    )
     log.info(f'Finished for {body}')
 
     return vector_response

@@ -3,7 +3,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Tuple, Optional, Set
+from typing import Tuple, Optional, List
 
 import geojson_pydantic
 import numpy as np
@@ -14,7 +14,11 @@ from rasterstats import zonal_stats
 from starlette.background import BackgroundTask
 from starlette.responses import FileResponse
 
+from naturalness.imagery_store_operator import Index
+
 log = logging.getLogger(__name__)
+
+NO_DATA_VALUES = {Index.NDVI: -999, Index.WATER: 0}
 
 
 class GeoTiffResponse(FileResponse):
@@ -60,7 +64,11 @@ class NaturalnessWorkUnit(BaseModel):
         return self
 
 
-def __compute_raster_response(raster_result: RemoteSensingResult, body: NaturalnessWorkUnit) -> GeoTiffResponse:
+def __compute_raster_response(
+    raster_result: RemoteSensingResult,
+    body: NaturalnessWorkUnit,
+    index: Index,
+) -> GeoTiffResponse:
     file_uuid = uuid.uuid4()
     file_path = Path(f'/tmp/{file_uuid}.tiff')
 
@@ -76,7 +84,7 @@ def __compute_raster_response(raster_result: RemoteSensingResult, body: Naturaln
         count=1,
         dtype=str(raster_result.index_data.dtype),
         crs=CRS.from_string('EPSG:4326'),
-        nodata=None,
+        nodata=NO_DATA_VALUES[index],
         transform=rasterio.transform.from_bounds(
             *raster_result.area_coords, width=raster_result.width, height=raster_result.height
         ),
@@ -94,11 +102,12 @@ def __compute_raster_response(raster_result: RemoteSensingResult, body: Naturaln
 
 
 def __compute_vector_response(
-    stats: Set[str], vectors: geojson_pydantic.FeatureCollection, raster_result: RemoteSensingResult
+    stats: List[str], vectors: geojson_pydantic.FeatureCollection, index: Index, raster_result: RemoteSensingResult
 ) -> geojson_pydantic.FeatureCollection:
     vector_result = aggregate_raster_response(
         stats=stats,
         geometries=vectors,
+        index=index,
         raster_data=raster_result.index_data,
         affine=rasterio.transform.from_bounds(
             *raster_result.area_coords, width=raster_result.width, height=raster_result.height
@@ -109,8 +118,19 @@ def __compute_vector_response(
 
 
 def aggregate_raster_response(
-    stats: Set[str], geometries: geojson_pydantic.FeatureCollection, raster_data: np.ndarray, affine: rasterio.Affine
+    stats: List[str],
+    geometries: geojson_pydantic.FeatureCollection,
+    index: Index,
+    raster_data: np.ndarray,
+    affine: rasterio.Affine,
 ) -> geojson_pydantic.FeatureCollection:
-    geojson = zonal_stats(vectors=geometries, raster=raster_data, stats=stats, affine=affine, geojson_out=True)
+    geojson = zonal_stats(
+        vectors=geometries,
+        raster=raster_data,
+        stats=stats,
+        affine=affine,
+        geojson_out=True,
+        nodata=NO_DATA_VALUES[index],
+    )
 
     return geojson_pydantic.FeatureCollection(type='FeatureCollection', features=geojson)
