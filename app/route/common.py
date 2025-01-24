@@ -46,21 +46,21 @@ class NaturalnessWorkUnit(BaseModel):
     start_date: Optional[date] = Field(
         title='Start Date',
         description='Lower bound (inclusive) of remote sensing imagery acquisition date (UTC). '
-        'If not set it will be automatically set to one month (30 days) before `end_date`',
+        'If not set it will be automatically set to one year before `end_date`',
         examples=['2023-05-01'],
         default=None,
     )
     end_date: date = Field(
         title='End Date',
         description="Upper bound (inclusive) of remote sensing imagery acquisition date (UTC). Defaults to today's date",
-        examples=['2023-06-01'],
+        examples=['2024-05-01'],
         default=datetime.now().date(),
     )
 
     @model_validator(mode='after')
-    def minus_week(self) -> 'NaturalnessWorkUnit':
+    def minus_year(self) -> 'NaturalnessWorkUnit':
         if not self.start_date:
-            self.start_date = self.end_date - timedelta(days=7)
+            self.start_date = self.end_date - timedelta(days=365)
         return self
 
 
