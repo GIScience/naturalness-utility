@@ -6,17 +6,17 @@ function setup() {
     return {
         input: [{
             datasource: "s2",
-            bands: ["B04", "B08", "SCL", "dataMask"],
+            bands: ["SCL", "dataMask"],
         }],
         output: [
             {
-                id: "NDVI",
-                bands: ["NDVI"],
+                id: "WATER",
+                bands: ["WATER"],
                 resx: 10,
                 resy: 10,
-                sampleType: "FLOAT32",
-                nodataValue: -999
-            },
+                sampleType: "UINT8",
+                nodataValue: 0
+            }
         ],
         mosaicking: "ORBIT" //https://docs.sentinel-hub.com/api/latest/evalscript/v3/#mosaicking
     }
@@ -28,29 +28,22 @@ function validate(sample) {
     return ![0, 1, 8, 9, 10].includes(sample.SCL)
 }
 
-
-function findMedian(arr) {
-    arr.sort((a, b) => a - b);
-    const middleIndex = Math.floor(arr.length / 2);
-
-    if (arr.length % 2 === 0) {
-        return (arr[middleIndex - 1] + arr[middleIndex]) / 2;
-    } else {
-        return arr[middleIndex];
-    }
+function findAverage(arr) {
+    const sum = arr.reduce((a, b) => a + b, 0);
+    return (sum / arr.length) || 0;
 }
 
 
 function evaluatePixel(samples) {
-    var ndvi_arr = []
+    var is_water_arr = []
     for (const sample of samples) {
         var isValid = validate(sample)
 
         // dataMask === 1 means there is data in that pixel
         if (isValid && (sample.dataMask === 1)) {
-            ndvi_value = index(sample.B08, sample.B04) // https://docs.sentinel-hub.com/api/latest/evalscript/functions/#index
-            ndvi_arr.push(ndvi_value)
+            const is_water = sample.SCL === 6 ? 1 : 0
+            is_water_arr.push(is_water)
         }
     }
-    return {NDVI: [findMedian(ndvi_arr)]};
+    return {WATER: [Math.round(findAverage(is_water_arr))]};
 }

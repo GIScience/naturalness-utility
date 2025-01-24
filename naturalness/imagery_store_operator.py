@@ -23,6 +23,7 @@ log = logging.getLogger(__name__)
 
 class Index(StrEnum):
     NDVI = 'NDVI'
+    WATER = 'WATER'
 
 
 class ImageryStore(ABC):
@@ -78,7 +79,7 @@ class SentinelHubOperator(ImageryStore):
                 ),
             ],
             responses=[
-                SentinelHubRequest.output_response(f'{index}', MimeType.TIFF),
+                SentinelHubRequest.output_response(index, MimeType.TIFF),
             ],
             bbox=bbox,
             size=(bbox_width, bbox_height),

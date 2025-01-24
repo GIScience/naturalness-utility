@@ -6,19 +6,25 @@ import pytest
 from starlette.testclient import TestClient
 
 from app.api import app, Settings
-from naturalness.imagery_store_operator import ImageryStore
+from naturalness.imagery_store_operator import ImageryStore, Index
 
 
 class TestImageryStore(ImageryStore):
     def imagery(
         self,
-        index: str,
+        index: Index,
         area_coords: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
         resolution: int = 10,
     ) -> tuple[np.ndarray, tuple[int, int]]:
-        return np.random.uniform(0.0, 1.0, (93, 100)).astype(np.float32), (93, 100)
+        match index:
+            case Index.NDVI:
+                return np.random.uniform(0.0, 1.0, (93, 100)).astype(np.float32), (93, 100)
+            case Index.WATER:
+                return np.random.choice([0, 1], (93, 100)).astype(np.uint8), (93, 100)
+            case _:
+                raise ValueError(f'Unsupported index {index}')
 
 
 @pytest.fixture
