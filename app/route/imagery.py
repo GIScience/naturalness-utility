@@ -3,9 +3,8 @@ import logging.config
 from typing import Tuple, List
 
 import geojson_pydantic
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from rasterstats import utils
 from starlette.requests import Request
 
 from app.route.common import (
@@ -14,6 +13,7 @@ from app.route.common import (
     __compute_raster_response,
     __compute_vector_response,
     RemoteSensingResult,
+    Aggregation,
 )
 from naturalness.imagery_store_operator import ImageryStore, Index
 
@@ -47,19 +47,12 @@ async def index_compute_raster(index: Index, body: NaturalnessWorkUnit, request:
 )
 async def index_compute_vector(
     index: Index,
-    aggregation_stats: List[str],
+    aggregation_stats: List[Aggregation],
     vectors: geojson_pydantic.FeatureCollection,
     body: NaturalnessWorkUnit,
     request: Request,
 ) -> geojson_pydantic.FeatureCollection:
     log.info(f'Creating index for {body}')
-
-    invalid_stats = set(aggregation_stats).difference(utils.VALID_STATS)
-    if invalid_stats:
-        raise HTTPException(
-            status_code=422,
-            detail=f'Summary statistic {invalid_stats} not supported.',
-        )
 
     raster_result = __provide_raster(
         index=index,

@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 from rasterio import MemoryFile
 
-from app.route.common import RemoteSensingResult
+from app.route.common import RemoteSensingResult, Aggregation
 from app.route.imagery import __provide_raster
-from test.conftest import TestImageryStore
 from naturalness.imagery_store_operator import Index
+from test.conftest import TestImageryStore
 
 
 def test_provide_raster():
@@ -68,7 +68,7 @@ def test_index_vector(mocked_client, index, default_vector_request):
 
 @pytest.mark.parametrize('index', Index)
 def test_index_vector_multi_agg(mocked_client, index, default_vector_request):
-    default_vector_request.update({'aggregation_stats': ['max', 'min']})
+    default_vector_request.update({'aggregation_stats': [Aggregation.max, Aggregation.min]})
 
     response = mocked_client.post(f'/{index}/vector', json=default_vector_request)
 
@@ -87,8 +87,7 @@ def test_index_vector_multi_agg(mocked_client, index, default_vector_request):
 
 @pytest.mark.parametrize('index', Index)
 def test_index_vector_raise_exception_invalid_summary(mocked_client, index, default_vector_request):
-    default_vector_request.update({'aggregation_stats': ['min', 'foo']})
+    default_vector_request.update({'aggregation_stats': [Aggregation.max, 'foo']})
 
     response = mocked_client.post(f'/{index}/vector', json=default_vector_request)
     assert response.status_code == 422
-    assert response.text == '{"detail":"Summary statistic {\'foo\'} not supported."}'

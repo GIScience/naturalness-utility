@@ -2,6 +2,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from enum import StrEnum
 from pathlib import Path
 from typing import Tuple, Optional, List
 
@@ -10,6 +11,7 @@ import numpy as np
 import rasterio
 from pydantic import confloat, Field, BaseModel, model_validator
 from rasterio.crs import CRS
+from rasterstats import utils
 from rasterstats import zonal_stats
 from starlette.background import BackgroundTask
 from starlette.responses import FileResponse
@@ -19,6 +21,8 @@ from naturalness.imagery_store_operator import Index
 log = logging.getLogger(__name__)
 
 NO_DATA_VALUES = {Index.NDVI: -999, Index.WATER: 0}
+
+Aggregation = StrEnum('Aggregation', utils.VALID_STATS)
 
 
 class GeoTiffResponse(FileResponse):
@@ -102,7 +106,10 @@ def __compute_raster_response(
 
 
 def __compute_vector_response(
-    stats: List[str], vectors: geojson_pydantic.FeatureCollection, index: Index, raster_result: RemoteSensingResult
+    stats: List[Aggregation],
+    vectors: geojson_pydantic.FeatureCollection,
+    index: Index,
+    raster_result: RemoteSensingResult,
 ) -> geojson_pydantic.FeatureCollection:
     vector_result = aggregate_raster_response(
         stats=stats,
@@ -118,7 +125,7 @@ def __compute_vector_response(
 
 
 def aggregate_raster_response(
-    stats: List[str],
+    stats: List[Aggregation],
     geometries: geojson_pydantic.FeatureCollection,
     index: Index,
     raster_data: np.ndarray,
