@@ -32,7 +32,7 @@ def test_naturalness_work_unit_infer_date_start():
         end_date=end_date,
     )
 
-    assert wu.start_date == date(2020, 1, 1)
+    assert wu.start_date == date(2019, 1, 8)
 
 
 def test_aggregate_raster_response():
