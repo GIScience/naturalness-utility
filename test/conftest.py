@@ -6,6 +6,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from app.api import app, Settings
+from app.route.common import Aggregation
 from naturalness.imagery_store_operator import ImageryStore, Index
 
 
@@ -45,7 +46,7 @@ def default_vector_request() -> dict:
             'area_coords': [0, 0, 2, 2],
             'end_date': '2023-06-01',
         },
-        'aggregation_stats': ['max'],
+        'aggregation_stats': [Aggregation.max],
         'vectors': {
             'type': 'FeatureCollection',
             'features': [

@@ -4,7 +4,7 @@ import geojson_pydantic
 import numpy as np
 import rasterio
 
-from app.route.common import RemoteSensingResult, aggregate_raster_response, NaturalnessWorkUnit
+from app.route.common import RemoteSensingResult, aggregate_raster_response, NaturalnessWorkUnit, Aggregation
 from naturalness.imagery_store_operator import Index
 
 
@@ -71,7 +71,7 @@ def test_aggregate_raster_response():
     )
 
     geom = aggregate_raster_response(
-        stats=['max'],
+        stats=[Aggregation.max],
         geometries=test_geometries,
         index=Index.NDVI,
         raster_data=test_raster_result.index_data,
