@@ -36,5 +36,5 @@ To start it, run the following commands
 
 ```
 docker build . --tag repo.heigit.org/climate-action/naturalness:devel
-docker run --publish 8000:8000  --env-file .env repo.heigit.org/climate-action//naturalness:devel
+docker run --rm --publish 8000:8000  --env-file .env repo.heigit.org/climate-action/naturalness:devel
 ```
