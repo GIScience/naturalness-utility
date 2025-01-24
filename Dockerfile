@@ -6,10 +6,14 @@ RUN pip install --no-cache-dir poetry==1.8.4
 
 COPY pyproject.toml poetry.lock ./
 
-RUN  poetry install --no-ansi --no-interaction --all-extras --without dev,test
+RUN  poetry install --no-ansi --no-interaction --all-extras --without dev,test --no-root
 
-COPY $PACKAGE_NAME $PACKAGE_NAME
+COPY README.md README.md
+COPY conf conf
 COPY app app
+COPY $PACKAGE_NAME $PACKAGE_NAME
+
+RUN poetry install --no-ansi --no-interaction --only-root
 
 SHELL ["/bin/bash", "-c"]
 ENTRYPOINT poetry run python app/api.py
