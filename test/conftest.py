@@ -21,9 +21,9 @@ class TestImageryStore(ImageryStore):
     ) -> tuple[np.ndarray, tuple[int, int]]:
         match index:
             case Index.NDVI:
-                return np.random.uniform(0.0, 1.0, (93, 100)).astype(np.float32), (93, 100)
+                return np.array([[0.0, 0.5, 1.0], [-999.0, 1.0, 1.0]], dtype=np.float32), (2, 3)
             case Index.WATER:
-                return np.random.choice([0, 1], (93, 100)).astype(np.uint8), (93, 100)
+                return np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), (2, 3)
             case _:
                 raise ValueError(f'Unsupported index {index}')
 
@@ -43,7 +43,7 @@ def mocked_client() -> TestClient:
 def default_vector_request() -> dict:
     return {
         'body': {
-            'area_coords': [0, 0, 2, 2],
+            'area_coords': [0, 0, 1, 1],
             'end_date': '2023-06-01',
         },
         'aggregation_stats': [Aggregation.max],
