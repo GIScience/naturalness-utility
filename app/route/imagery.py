@@ -1,9 +1,9 @@
 import datetime
 import logging.config
-from typing import Tuple, List
+from typing import Tuple, List, Annotated
 
 import geojson_pydantic
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
@@ -24,7 +24,8 @@ router = APIRouter(prefix='', tags=['index'])
 
 @router.post(
     '/{index}/raster',
-    description='Query index and return it as raster (GeoTIFF)',
+    summary='Index values as raster',
+    description='Retrieve the requested index and return its raw data as raster (GeoTIFF)',
     response_class=GeoTiffResponse,
 )
 async def index_compute_raster(index: Index, body: NaturalnessWorkUnit, request: Request) -> GeoTiffResponse:
@@ -42,13 +43,35 @@ async def index_compute_raster(index: Index, body: NaturalnessWorkUnit, request:
 
 @router.post(
     '/{index}/vector',
-    description='Query index and return it as vector (GeoJSON)',
+    summary='Aggregate index values to user-defined regions',
+    description='Retrieve the requested index and compute a summary of the values within the given vector geometry (GeoJSON)',
     response_class=JSONResponse,
 )
 async def index_compute_vector(
     index: Index,
-    aggregation_stats: List[Aggregation],
-    vectors: geojson_pydantic.FeatureCollection,
+    aggregation_stats: Annotated[List[Aggregation], Body(examples=[[Aggregation.median]])],
+    vectors: Annotated[
+        geojson_pydantic.FeatureCollection,
+        Body(
+            examples=[
+                {
+                    'type': 'FeatureCollection',
+                    'features': [
+                        {
+                            'type': 'Feature',
+                            'properties': {},
+                            'geometry': {
+                                'coordinates': [
+                                    [[8.66, 49.42], [8.66, 49.41], [8.67, 49.41], [8.67, 49.42], [8.66, 49.42]]
+                                ],
+                                'type': 'Polygon',
+                            },
+                        }
+                    ],
+                }
+            ]
+        ),
+    ],
     body: NaturalnessWorkUnit,
     request: Request,
 ) -> geojson_pydantic.FeatureCollection:

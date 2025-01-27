@@ -8,6 +8,7 @@ import yaml
 from fastapi import FastAPI
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+import naturalness
 from app.route import imagery, health
 from naturalness.imagery_store_operator import SentinelHubOperator
 
@@ -22,6 +23,21 @@ class Settings(BaseSettings):
     sentinelhub_api_secret: str
 
     model_config = SettingsConfigDict(env_file='.env')
+
+
+description = """
+# Climate Action Naturalness Utility
+
+The API to the HeiGIT Climate Action Naturalness utility provides an access point to SentinelHub to calculated different
+indices linked to naturalness such as the NDVI.
+"""
+
+tags_metadata = [
+    {
+        'name': 'index',
+        'description': 'Retrieve, calculate and manipulate different indices.',
+    }
+]
 
 
 @asynccontextmanager
@@ -48,7 +64,21 @@ async def configure_dependencies(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=configure_dependencies)
+app = FastAPI(
+    title='Naturalness Utility',
+    summary='Calculate naturalness for user selected areas.',
+    description=description,
+    version=f'{naturalness.__version__}',
+    contact={
+        'name': 'Climate Acton Team',
+        'url': 'https://heigit.org/climate-action',
+        'email': 'info@heigit.org',
+    },
+    openapi_tags=tags_metadata,
+    lifespan=configure_dependencies,
+    docs_url=None if os.getenv('DISABLE_SWAGGER', 'False') in ('True', 'true') else '/docs',
+    redoc_url=None if os.getenv('DISABLE_SWAGGER', 'False') in ('True', 'true') else '/redoc',
+)
 app.include_router(imagery.router)
 app.include_router(health.router)
 
