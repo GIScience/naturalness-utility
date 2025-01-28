@@ -55,7 +55,7 @@ async def configure_dependencies(app: FastAPI):
     app.state.imagery_store = SentinelHubOperator(
         api_id=settings.sentinelhub_api_id,
         api_secret=settings.sentinelhub_api_secret,
-        script_path=settings.conf_path,
+        script_path=settings.conf_path / 'eval_scripts',
         cache_dir=Path('./cache') / 'imagery',
     )
 
