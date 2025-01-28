@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 class Index(StrEnum):
     NDVI = 'NDVI'
     WATER = 'WATER'
+    NATURALNESS = 'NATURALNESS'
 
 
 class ImageryStore(ABC):
@@ -49,7 +50,7 @@ class SentinelHubOperator(ImageryStore):
         cache_dir: Path,
     ):
         self.config = SHConfig(**{'sh_client_id': api_id, 'sh_client_secret': api_secret})
-        self.evalscripts = {index: (script_path / f'{index}_evalscript.js').read_text() for index in Index}
+        self.evalscripts = {index: (script_path / f'{index}.js').read_text() for index in Index}
 
         self.data_folder = cache_dir
         self.data_folder.mkdir(parents=True, exist_ok=True)

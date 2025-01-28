@@ -15,7 +15,7 @@ function setup() {
                 resx: 10,
                 resy: 10,
                 sampleType: "UINT8",
-                nodataValue: 0
+                nodataValue: 255
             }
         ],
         mosaicking: "ORBIT" //https://docs.sentinel-hub.com/api/latest/evalscript/v3/#mosaicking

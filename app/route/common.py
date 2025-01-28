@@ -22,7 +22,11 @@ from naturalness.imagery_store_operator import Index
 
 log = logging.getLogger(__name__)
 
-NO_DATA_VALUES = {Index.NDVI: -999, Index.WATER: 0}
+NO_DATA_VALUES = {
+    Index.NDVI: -999,
+    Index.WATER: 255,
+    Index.NATURALNESS: -999,
+}
 
 Aggregation = StrEnum('Aggregation', utils.VALID_STATS)
 

@@ -47,14 +47,20 @@ def test_index_raster(mocked_client, index):
 
     match index:
         case Index.NDVI:
-            expected_result = np.array([[[0.0, 0.5, 1.0], [-999.0, 1.0, 1.0]]])
-            expected_mask = np.array([[[False, False, False], [True, False, False]]])
+            expected_result = np.array([[[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]]])
+            expected_mask = np.array([[[True, False, False], [False, False, False]]])
 
             np.testing.assert_array_equal(response_values, expected_result)
             np.testing.assert_array_equal(response_mask, expected_mask)
         case Index.WATER:
-            expected_result = np.array([[[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]])
-            expected_mask = np.array([[[True, True, True], [False, False, False]]])
+            expected_result = np.array([[[255, 0, 0], [1, 1, 1]]])
+            expected_mask = np.array([[[True, False, False], [False, False, False]]])
+
+            np.testing.assert_array_equal(response_values, expected_result)
+            np.testing.assert_array_equal(response_mask, expected_mask)
+        case Index.NATURALNESS:
+            expected_result = np.array([[[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]]])
+            expected_mask = np.array([[[True, False, False], [False, False, False]]])
 
             np.testing.assert_array_equal(response_values, expected_result)
             np.testing.assert_array_equal(response_mask, expected_mask)
@@ -77,6 +83,8 @@ def test_index_vector(mocked_client, index, default_vector_request):
         case Index.NDVI:
             np.testing.assert_almost_equal(response_feature['properties']['max'], 1.0)
         case Index.WATER:
+            np.testing.assert_almost_equal(response_feature['properties']['max'], 1.0)
+        case Index.NATURALNESS:
             np.testing.assert_almost_equal(response_feature['properties']['max'], 1.0)
         case _:
             assert False, f'Test from {index} not implemented'
@@ -104,7 +112,10 @@ def test_index_vector_multi_agg(mocked_client, index, default_vector_request):
             np.testing.assert_almost_equal(response_feature['properties']['min'], 0.0)
         case Index.WATER:
             np.testing.assert_almost_equal(response_feature['properties']['max'], 1.0)
-            np.testing.assert_almost_equal(response_feature['properties']['min'], 1.0)
+            np.testing.assert_almost_equal(response_feature['properties']['min'], 0.0)
+        case Index.NATURALNESS:
+            np.testing.assert_almost_equal(response_feature['properties']['max'], 1.0)
+            np.testing.assert_almost_equal(response_feature['properties']['min'], 0.0)
         case _:
             assert False, f'Test from {index} not implemented'
 

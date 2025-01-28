@@ -25,9 +25,11 @@ class TestImageryStore(ImageryStore):
 
         match index:
             case Index.NDVI:
-                return np.array([[0.0, 0.5, 1.0], [-999.0, 1.0, 1.0]], dtype=np.float32), (2, 3)
+                return np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32), (2, 3)
             case Index.WATER:
-                return np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), (2, 3)
+                return np.array([[255, 0, 0], [1, 1, 1]]), (2, 3)
+            case Index.NATURALNESS:
+                return np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32), (2, 3)
             case _:
                 raise ValueError(f'Unsupported index {index}')
 
