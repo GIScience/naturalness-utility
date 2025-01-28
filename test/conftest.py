@@ -1,6 +1,7 @@
 from typing import Tuple
 from unittest.mock import patch
 
+import geojson_pydantic
 import numpy as np
 import pytest
 from starlette.testclient import TestClient
@@ -14,11 +15,14 @@ class TestImageryStore(ImageryStore):
     def imagery(
         self,
         index: Index,
-        area_coords: Tuple[float, float, float, float],
+        bbox: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
         resolution: int = 10,
     ) -> tuple[np.ndarray, tuple[int, int]]:
+        if None in (index, bbox, start_date, end_date, resolution):
+            raise ValueError('Missing input parameters')
+
         match index:
             case Index.NDVI:
                 return np.array([[0.0, 0.5, 1.0], [-999.0, 1.0, 1.0]], dtype=np.float32), (2, 3)
@@ -40,14 +44,18 @@ def mocked_client() -> TestClient:
 
 
 @pytest.fixture
-def default_vector_request() -> dict:
+def default_vector_request(default_feature_collection) -> dict:
     return {
-        'body': {
-            'area_coords': [0, 0, 1, 1],
-            'end_date': '2023-06-01',
-        },
+        'time_range': {'end_date': '2023-06-01'},
         'aggregation_stats': [Aggregation.max],
-        'vectors': {
+        'vectors': default_feature_collection.model_dump(mode='json'),
+    }
+
+
+@pytest.fixture
+def default_feature_collection() -> geojson_pydantic.FeatureCollection:
+    return geojson_pydantic.FeatureCollection.model_validate(
+        {
             'type': 'FeatureCollection',
             'features': [
                 {
@@ -59,5 +67,5 @@ def default_vector_request() -> dict:
                     },
                 }
             ],
-        },
-    }
+        }
+    )

@@ -11,9 +11,7 @@ from test.conftest import TestImageryStore
 
 
 def test_provide_raster():
-    expected_result = RemoteSensingResult(
-        index_data=np.array(True), height=2, width=3, area_coords=(0.0, 0.0, 1.0, 1.0)
-    )
+    expected_result = RemoteSensingResult(index_data=np.array(True), height=2, width=3, bbox=(0.0, 0.0, 1.0, 1.0))
 
     bbox = (0.0, 0.0, 1.0, 1.0)
     imagery_store = TestImageryStore()
@@ -31,8 +29,8 @@ def test_provide_raster():
 @pytest.mark.parametrize('index', Index)
 def test_index_raster(mocked_client, index):
     request_body = {
-        'area_coords': [0.0, 0.0, 1.0, 1.0],
-        'end_date': '2023-06-01',
+        'bbox': [0.0, 0.0, 1.0, 1.0],
+        'time_range': {'end_date': '2023-06-01'},
     }
 
     response = mocked_client.post(f'/{index}/raster', json=request_body)

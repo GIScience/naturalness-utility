@@ -13,6 +13,8 @@ from app.route.common import (
     __compute_raster_response,
     __compute_vector_response,
     RemoteSensingResult,
+    TimeRange,
+    get_bbox,
     Aggregation,
 )
 from naturalness.imagery_store_operator import ImageryStore, Index
@@ -33,9 +35,9 @@ async def index_compute_raster(index: Index, body: NaturalnessWorkUnit, request:
 
     raster_result = __provide_raster(
         index=index,
-        bbox=body.area_coords,
-        start_date=body.start_date,
-        end_date=body.end_date,
+        bbox=body.bbox,
+        start_date=body.time_range.start_date,
+        end_date=body.time_range.end_date,
         imagery_store=request.app.state.imagery_store,
     )
     return __compute_raster_response(raster_result=raster_result, body=body, index=index)
@@ -72,16 +74,16 @@ async def index_compute_vector(
             ]
         ),
     ],
-    body: NaturalnessWorkUnit,
+    time_range: TimeRange,
     request: Request,
 ) -> geojson_pydantic.FeatureCollection:
-    log.info(f'Creating index for {body}')
+    log.info(f'Creating index for {time_range}')
 
     raster_result = __provide_raster(
         index=index,
-        bbox=body.area_coords,
-        start_date=body.start_date,
-        end_date=body.end_date,
+        bbox=get_bbox(features=vectors),
+        start_date=time_range.start_date,
+        end_date=time_range.end_date,
         imagery_store=request.app.state.imagery_store,
     )
 
@@ -91,7 +93,7 @@ async def index_compute_vector(
         index=index,
         raster_result=raster_result,
     )
-    log.info(f'Finished for {body}')
+    log.info(f'Finished for {time_range}')
 
     return vector_response
 
@@ -104,7 +106,7 @@ def __provide_raster(
     imagery_store: ImageryStore,
 ) -> RemoteSensingResult:
     index_data, (h, w) = imagery_store.imagery(
-        index=index, area_coords=bbox, start_date=start_date.isoformat(), end_date=end_date.isoformat()
+        index=index, bbox=bbox, start_date=start_date.isoformat(), end_date=end_date.isoformat()
     )
     log.info('Query index as raster values completed')
 

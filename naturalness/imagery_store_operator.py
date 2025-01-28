@@ -31,7 +31,7 @@ class ImageryStore(ABC):
     def imagery(
         self,
         index: Index,
-        area_coords: Tuple[float, float, float, float],
+        bbox: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
         resolution: int = 10,
@@ -57,12 +57,12 @@ class SentinelHubOperator(ImageryStore):
     def imagery(
         self,
         index: Index,
-        area_coords: Tuple[float, float, float, float],
+        bbox: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
         resolution: int = 10,
     ) -> tuple[np.ndarray, tuple[int, int]]:
-        bbox = BBox(bbox=area_coords, crs=CRS.WGS84)
+        bbox = BBox(bbox=bbox, crs=CRS.WGS84)
         bbox_width, bbox_height = bbox_to_dimensions(bbox, resolution=resolution)
 
         if bbox_width > 2500 or bbox_height > 2500:
