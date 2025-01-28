@@ -7,6 +7,8 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/9418a2030dd3ecf312f80ea055d6fc133fc1445d...main)
 
+## [1.0.0](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.0.0) - 2025-01-28
+
 ### Added
 
 - first version of a Naturalness Utility: API functionality with client-input parameters to define AOI and time span for
