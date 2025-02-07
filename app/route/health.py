@@ -9,7 +9,7 @@ class HealthCheck(BaseModel):
 
 
 @router.get(
-    '/', status_code=200, summary='Annie, are you ok?', description='Verify whether the application API is operational'
+    '', status_code=200, summary='Annie, are you ok?', description='Verify whether the application API is operational'
 )
 async def is_ok() -> HealthCheck:
     return HealthCheck()
