@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/9418a2030dd3ecf312f80ea055d6fc133fc1445d...main)
+## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/1.0.0...main)
+
+### Fixed
+
+- removed the trailing slash in the `/health` route ([infrastructure#55](https://gitlab.heigit.org/climate-action/infrastructure/-/issues/55))
 
 ## [1.0.0](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.0.0) - 2025-01-28
 
