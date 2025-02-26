@@ -121,7 +121,7 @@ class SentinelHubOperator(ImageryStore):
         self,
         index: Index,
         request: SentinelHubRequest,
-        eval_duration_range: Tuple[int, int] = (1300, 1500),
+        eval_duration_range: Tuple[int, int] = (1100, 1300),
     ) -> Tuple[float, float]:
         lower_eval_duration_bound, upper_eval_duration_bound = eval_duration_range
         assert lower_eval_duration_bound <= upper_eval_duration_bound, (
@@ -191,33 +191,33 @@ class SentinelHubOperator(ImageryStore):
         remote_collections: Set[str],
         eval_script_duration: int,
     ) -> float:
-        resolution_factor = max((width * height) / (512 * 512), 0.01)
+        aoi_factor = max((width * height) / (512 * 512), 0.01)
 
         band_factor = band_number / 3.0
 
         match output_format:
             case OutputFormat.BIT_8:
-                format_factor = 1.0
+                output_format_factor = 1.0
             case OutputFormat.BIT_16:
-                format_factor = 1.0
+                output_format_factor = 1.0
             case OutputFormat.BIT_32:
-                format_factor = 2.0
+                output_format_factor = 2.0
             case OutputFormat.OCTET_STREAM:
-                format_factor = 1.4
+                output_format_factor = 1.4
             case _:
                 raise ValueError(f'Output format {output_format} is not supported for PU calculation')
 
-        samples_factor = 1.0
+        data_samples_factor = n_samples
 
-        collection_factor = len(local_collections) + 2 * len(remote_collections)
+        data_fusion_factor = len(local_collections) + 2 * len(remote_collections)
 
         if eval_script_duration > 200:
-            eval_factor = math.ceil((eval_script_duration - 200) / 100) * 0.5
+            eval_factor = 1.0 + math.ceil((eval_script_duration - 200) / 100) * 0.5
         else:
             eval_factor = 1.0
 
         return math.prod(
-            (resolution_factor, band_factor, format_factor, samples_factor, n_samples, collection_factor, eval_factor)
+            (aoi_factor, band_factor, output_format_factor, data_samples_factor, data_fusion_factor, eval_factor)
         )
 
     @staticmethod
