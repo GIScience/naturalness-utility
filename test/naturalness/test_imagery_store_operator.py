@@ -48,6 +48,21 @@ def test_pu_calculation_ndvi():
     numpy.testing.assert_almost_equal(actual=pu, desired=0.0066666)
 
 
+def test_pu_calculation_ndvi_slow():
+    """Same as pu calculation test above, but assuming slow return to test that branch of code."""
+    pu = SentinelHubOperator._calculate_pus(
+        width=20,
+        height=20,
+        band_number=2,
+        output_format=OutputFormat.BIT_8,
+        n_samples=1,
+        local_collections={DataCollection.SENTINEL2_L2A},
+        remote_collections=set(),
+        eval_script_duration=201,
+    )
+    numpy.testing.assert_almost_equal(actual=pu, desired=0.0099999)
+
+
 def test_pu_calculation_benchmark():
     """
     This is an actual value resulting from a real world calculation. All values are fixed except the eval-script
@@ -64,7 +79,7 @@ def test_pu_calculation_benchmark():
         n_samples=6,
         local_collections={DataCollection.SENTINEL2_L2A},
         remote_collections=set(),
-        eval_script_duration=1350,
+        eval_script_duration=1200,
     )
     numpy.testing.assert_almost_equal(actual=pu, desired=11.06396484375)
 
@@ -90,7 +105,7 @@ def test_pu_estimation_benchmark():
     will lead to the here described estimation variables.
 
     The actual PU value for this computation was 11.06396484375 (see `test_pu_calculation_benchmark`) meaning an
-    eval_return time between 1301 and 1400.
+    eval_return time between 1101 and 1200.
     """
     operator = SentinelHubOperator(
         api_id='api_id', api_secret='api_secret', script_path=Path('conf/eval_scripts'), cache_dir=Path('/tmp')
@@ -115,7 +130,7 @@ def test_pu_estimation_benchmark():
             size=(332, 364),
         )
         pu_lower_estimate, pu_upper_estimate = operator.estimate_pus(
-            index=Index.NDVI, request=request, eval_duration_range=(1300, 1500)
+            index=Index.NDVI, request=request, eval_duration_range=(1100, 1300)
         )
     numpy.testing.assert_almost_equal(actual=pu_lower_estimate, desired=10.1419677734375)
     numpy.testing.assert_almost_equal(actual=pu_upper_estimate, desired=11.9859619140625)
@@ -147,7 +162,7 @@ def test_pu_estimation_cached():
             size=(332, 364),
         )
         pu_lower_estimate, pu_upper_estimate = operator.estimate_pus(
-            index=Index.NDVI, request=request, eval_duration_range=(1300, 1500)
+            index=Index.NDVI, request=request, eval_duration_range=(1100, 1300)
         )
     assert pu_lower_estimate == 0.0
     assert pu_upper_estimate == 0.0
