@@ -11,6 +11,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 - removed the trailing slash in the `/health` route ([infrastructure#55](https://gitlab.heigit.org/climate-action/infrastructure/-/issues/55))
 
+### Added
+
+- the utility is now able to estimate the required PUs and retrieve the actually consumed PUs
+
 ## [1.0.0](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.0.0) - 2025-01-28
 
 ### Added
