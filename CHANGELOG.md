@@ -7,9 +7,15 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/1.0.0...main)
 
+### Changed
+
+- the default time range is now the last complete calendar year. This enables the utility to do more extensive caching
+  as the results will be stable for 1y for the same region.
+
 ### Fixed
 
-- removed the trailing slash in the `/health` route ([infrastructure#55](https://gitlab.heigit.org/climate-action/infrastructure/-/issues/55))
+- removed the trailing slash in the `/health`
+  route ([infrastructure#55](https://gitlab.heigit.org/climate-action/infrastructure/-/issues/55))
 
 ### Added
 

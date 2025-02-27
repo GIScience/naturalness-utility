@@ -1,7 +1,7 @@
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from enum import StrEnum
 from pathlib import Path
 from typing import Tuple, Optional, List
@@ -48,14 +48,15 @@ class TimeRange(BaseModel):
         title='Start Date',
         description='Lower bound (inclusive) of remote sensing imagery acquisition date (UTC). '
         'If not set it will be automatically set to one year before `end_date`',
-        examples=['2023-05-01'],
+        examples=['2024-01-01'],
         default=None,
     )
     end_date: date = Field(
         title='End Date',
-        description="Upper bound (inclusive) of remote sensing imagery acquisition date (UTC). Defaults to today's date",
-        examples=['2024-05-01'],
-        default=datetime.now().date(),
+        description='Upper bound (inclusive) of remote sensing imagery acquisition date (UTC). '
+        'Defaults to the 31st December of last year.',
+        examples=['2024-12-31'],
+        default=date(date.today().year - 1, 12, 31),
     )
 
     @model_validator(mode='after')
@@ -77,7 +78,7 @@ class NaturalnessWorkUnit(BaseModel):
     time_range: TimeRange = Field(
         title='Time Range',
         description='The time range of satellite observations to base the index on.',
-        examples=[TimeRange(end_date=datetime.now().date())],
+        examples=[TimeRange()],
     )
     bbox: Tuple[
         confloat(ge=-180, le=180), confloat(ge=-90, le=90), confloat(ge=-180, le=180), confloat(ge=-90, le=90)
