@@ -50,6 +50,8 @@ async def configure_dependencies(app: FastAPI):
     :return: context manager generator
     """
     log.info('Initialising...')
+    # the settings must be provided in an .env file or as env vars by the programmer that recreates the cashed data
+    # noinspection PyArgumentList
     settings = Settings()
 
     app.state.imagery_store = SentinelHubOperator(
@@ -83,6 +85,8 @@ app.include_router(imagery.router)
 app.include_router(health.router)
 
 if __name__ == '__main__':
+    # the settings must be provided in an .env file or as env vars by the programmer that recreates the cashed data
+    # noinspection PyArgumentList
     settings = Settings()
     logging.basicConfig(level=settings.log_level.upper())
     log_config = settings.conf_path / 'logging.yaml'

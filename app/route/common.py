@@ -75,7 +75,7 @@ class NaturalnessWorkUnit(BaseModel):
     ] = Field(
         title='Area Coordinates',
         description='Bounding box coordinates in WGS 84 (west, south, east, north)',
-        examples=[[8.65, 49.38, 8.75, 49.41]],
+        examples=[[8.70, 49.41, 8.71, 49.42]],
     )
 
 
