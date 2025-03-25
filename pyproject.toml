@@ -28,6 +28,7 @@ semver = "^3.0.4"
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.1"
 httpx = "^0.28.1"
+pytest-responses = "^0.5.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -38,6 +39,11 @@ line-length = 120
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.pytest.ini_options]
+markers = [
+    "external: marks tests that potentially make external API calls (deselect with '-m \"not external\"')",
+]
 
 [build-system]
 requires = ["poetry-core"]

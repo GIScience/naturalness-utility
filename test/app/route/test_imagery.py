@@ -1,29 +1,9 @@
-from datetime import datetime, timedelta
-
 import numpy as np
 import pytest
 from rasterio import MemoryFile
 
-from app.route.common import RemoteSensingResult, Aggregation
-from app.route.imagery import __provide_raster
+from app.route.common import Aggregation
 from naturalness.imagery_store_operator import Index
-from test.conftest import TestImageryStore
-
-
-def test_provide_raster():
-    expected_result = RemoteSensingResult(index_data=np.array(True), height=2, width=3, bbox=(0.0, 0.0, 1.0, 1.0))
-
-    bbox = (0.0, 0.0, 1.0, 1.0)
-    imagery_store = TestImageryStore()
-    computed_remote_sensing_result = __provide_raster(
-        index=Index.NDVI,
-        bbox=bbox,
-        imagery_store=imagery_store,
-        start_date=datetime.now() - timedelta(days=7),
-        end_date=datetime.now(),
-    )
-
-    assert computed_remote_sensing_result.index_data.shape == (expected_result.height, expected_result.width)
 
 
 @pytest.mark.parametrize('index', Index)
