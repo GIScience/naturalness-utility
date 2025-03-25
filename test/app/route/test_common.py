@@ -6,8 +6,8 @@ import pytest
 from pydantic import ValidationError
 
 from app.route.common import Aggregation, TimeRange
-from app.route.common import RemoteSensingResult, NaturalnessWorkUnit, get_bbox, __compute_vector_response
-from naturalness.imagery_store_operator import Index
+from app.route.common import NaturalnessWorkUnit, get_bbox, __compute_vector_response
+from naturalness.imagery_store_operator import Index, RemoteSensingResult, ProcessingUnitStats
 
 
 def test_time_range_infer_date_start():
@@ -67,6 +67,7 @@ def test_compute_vector_response():
         height=data.shape[0],
         width=data.shape[1],
         bbox=bbox,
+        pus=ProcessingUnitStats(estimated=12, consumed=12),
     )
 
     geom = __compute_vector_response(

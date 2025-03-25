@@ -1,0 +1,66 @@
+{
+    "request": {
+        "headers": {
+            "accept": "image/tiff",
+            "content-type": "application/json"
+        },
+        "payload": {
+            "evalscript": "//VERSION=3\n\n//Based on https://custom-scripts.sentinel-hub.com/sentinel-2/max_ndvi/\n\nfunction setup() {\n    return {\n        input: [{\n            datasource: \"s2\",\n            bands: [\"SCL\", \"dataMask\"],\n        }],\n        output: [\n            {\n                id: \"WATER\",\n                bands: [\"WATER\"],\n                resx: 10,\n                resy: 10,\n                sampleType: \"UINT8\",\n                nodataValue: 255\n            }\n        ],\n        mosaicking: \"ORBIT\" //https://docs.sentinel-hub.com/api/latest/evalscript/v3/#mosaicking\n    }\n}\n\n\nfunction validate(sample) {\n    // See values in https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-2/scene-classification/\n    return ![0, 1, 8, 9, 10].includes(sample.SCL)\n}\n\nfunction findAverage(arr) {\n    const sum = arr.reduce((a, b) => a + b, 0);\n    return (sum / arr.length) || 0;\n}\n\n\nfunction evaluatePixel(samples) {\n    var is_water_arr = []\n    for (const sample of samples) {\n        var isValid = validate(sample)\n\n        // dataMask === 1 means there is data in that pixel\n        if (isValid && (sample.dataMask === 1)) {\n            const is_water = sample.SCL === 6 ? 1 : 0\n            is_water_arr.push(is_water)\n        }\n    }\n    return {WATER: [Math.round(findAverage(is_water_arr))]};\n}",
+            "input": {
+                "bounds": {
+                    "bbox": [
+                        8.7,
+                        49.41,
+                        8.71,
+                        49.42
+                    ],
+                    "properties": {
+                        "crs": "http://www.opengis.net/def/crs/EPSG/0/4326"
+                    }
+                },
+                "data": [
+                    {
+                        "dataFilter": {
+                            "timeRange": {
+                                "from": "2024-09-01T00:00:00Z",
+                                "to": "2024-09-10T23:59:59Z"
+                            }
+                        },
+                        "id": "s2",
+                        "type": "sentinel-2-l2a"
+                    }
+                ]
+            },
+            "output": {
+                "height": 111,
+                "responses": [
+                    {
+                        "format": {
+                            "type": "image/tiff"
+                        },
+                        "identifier": "WATER"
+                    }
+                ],
+                "width": 73
+            }
+        },
+        "timestamp": "2025-03-19T20:47:01.608854",
+        "url": "https://services.sentinel-hub.com/api/v1/process"
+    },
+    "response": {
+        "elapsed": 1.131414,
+        "headers": {
+            "Connection": "keep-alive",
+            "Content-Length": "508",
+            "Content-Type": "image/tiff",
+            "Date": "Wed, 19 Mar 2025 19:47:01 GMT",
+            "access-control-allow-credentials": "true",
+            "access-control-allow-headers": "origin,content-type,accept,accept-crs,authorization,cache-control",
+            "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
+            "access-control-allow-origin": "*",
+            "access-control-max-age": "3600",
+            "x-processingunits-spent": "0.041213990486085095"
+        },
+        "status_code": 200
+    }
+}

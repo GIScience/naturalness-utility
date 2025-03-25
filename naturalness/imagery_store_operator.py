@@ -1,8 +1,8 @@
-import datetime
 import logging
 import math
 import os
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from enum import StrEnum, Enum
 from pathlib import Path
 from typing import Tuple, Set
@@ -19,11 +19,27 @@ from sentinelhub import (
     SHConfig,
     ServiceUrl,
 )
+from sentinelhub.api.catalog import get_available_timestamps
 from sentinelhub.download.models import DownloadResponse
 
 from naturalness.exception import OperatorInteractionException, OperatorValidationException
 
 log = logging.getLogger(__name__)
+
+
+@dataclass
+class ProcessingUnitStats:
+    estimated: float
+    consumed: float
+
+
+@dataclass
+class RemoteSensingResult:
+    index_data: np.ndarray
+    height: int
+    width: int
+    bbox: Tuple[float, float, float, float]
+    pus: ProcessingUnitStats
 
 
 class OutputFormat(Enum):
@@ -48,8 +64,7 @@ class ImageryStore(ABC):
         start_date: str,
         end_date: str,
         resolution: int = 10,
-    ) -> Tuple[np.ndarray, Tuple[int, int]]:
-        """Returns images as numpy array in shape [height, width, channels]"""
+    ) -> RemoteSensingResult:
         pass
 
 
@@ -66,7 +81,6 @@ class SentinelHubOperator(ImageryStore):
 
         self.data_folder = cache_dir
         self.data_folder.mkdir(parents=True, exist_ok=True)
-        self.MAX_REVISIT_RATE = 1 / 5
 
     def imagery(
         self,
@@ -75,9 +89,9 @@ class SentinelHubOperator(ImageryStore):
         start_date: str,
         end_date: str,
         resolution: int = 10,
-    ) -> tuple[np.ndarray, tuple[int, int]]:
-        bbox = BBox(bbox=bbox, crs=CRS.WGS84)
-        bbox_width, bbox_height = bbox_to_dimensions(bbox, resolution=resolution)
+    ) -> RemoteSensingResult:
+        bbox_obj = BBox(bbox=bbox, crs=CRS.WGS84)
+        bbox_width, bbox_height = bbox_to_dimensions(bbox_obj, resolution=resolution)
 
         if bbox_width > 2500 or bbox_height > 2500:
             raise OperatorValidationException('Area exceeds processing limit: 2500 px x 2500 px')
@@ -95,55 +109,52 @@ class SentinelHubOperator(ImageryStore):
             responses=[
                 SentinelHubRequest.output_response(index, MimeType.TIFF),
             ],
-            bbox=bbox,
+            bbox=bbox_obj,
             size=(bbox_width, bbox_height),
             config=self.config,
         )
-        min_estimated_pus, max_estimated_pus = self.estimate_pus(
-            index=index,
-            request=request,
-        )
+        pu_stats = self.estimate_pus(index=index, request=request)
         try:
             data = request.get_data(save_data=True, decode_data=False)[0]
         except DownloadFailedException:
             log.exception('Download of remote sensing scenes failed')
             raise OperatorInteractionException('SentinelHub operator interaction not possible.')
 
-        _ = self._get_actual_pus(
-            data=data,
-            min_estimated_pus=min_estimated_pus,
-            max_estimated_pus=max_estimated_pus,
+        pu_stats.consumed = self._get_actual_pus(data=data)
+
+        if pu_stats.consumed > 0.0 and not math.isclose(pu_stats.estimated, pu_stats.consumed):
+            log.warning(
+                f'The pu estimation was inaccurate. The request required {pu_stats.estimated} PUs but the estimation was '
+                f'{pu_stats.consumed} PUs.'
+            )
+
+        log.info('RS data retrieved')
+        return RemoteSensingResult(
+            index_data=data.decode(),
+            height=bbox_height,
+            width=bbox_width,
+            bbox=bbox,
+            pus=pu_stats,
         )
 
-        return data.decode(), (bbox_height, bbox_width)
-
-    def estimate_pus(
-        self,
-        index: Index,
-        request: SentinelHubRequest,
-        eval_duration_range: Tuple[int, int] = (1100, 1300),
-    ) -> Tuple[float, float]:
-        lower_eval_duration_bound, upper_eval_duration_bound = eval_duration_range
-        assert lower_eval_duration_bound <= upper_eval_duration_bound, (
-            'The eval script execution range is given in ' 'the wrong order, provide the lower bound ' 'first.'
-        )
-
+    def estimate_pus(self, index: Index, request: SentinelHubRequest) -> ProcessingUnitStats:
         _, response_path = request.download_list[0].get_storage_paths()
         if os.path.exists(response_path):
             log.debug('Expecting a cached result with no PU consumption.')
-            return 0.0, 0.0
+            return ProcessingUnitStats(estimated=0.0, consumed=math.nan)
 
         match index:
             case Index.NDVI:
-                band_number = 2
+                band_number = 3
+                output_format = OutputFormat.BIT_32
             case Index.WATER:
                 band_number = 1
+                output_format = OutputFormat.BIT_8
             case Index.NATURALNESS:
                 band_number = 3
+                output_format = OutputFormat.BIT_32
             case _:
                 raise ValueError(f'Index {index} is not supported for PU estimation')
-
-        output_format = OutputFormat.BIT_8
 
         request_input = request.payload.get('input')
         request_output = request.payload.get('output')
@@ -155,29 +166,29 @@ class SentinelHubOperator(ImageryStore):
         bbox_height = request_output.get('height')
         bbox_width = request_output.get('width')
 
-        start_date = request_input.get('data')[0].get('dataFilter').get('timeRange').get('from')
-        start_date = datetime.datetime.fromisoformat(start_date).date()
-        end_date = request_input.get('data')[0].get('dataFilter').get('timeRange').get('to')
-        end_date = datetime.datetime.fromisoformat(end_date).date()
-        n_samples = math.ceil((end_date - start_date).days * self.MAX_REVISIT_RATE)
-
-        pu_range = [
-            SentinelHubOperator._calculate_pus(
-                width=bbox_width,
-                height=bbox_height,
-                band_number=band_number,
-                output_format=output_format,
-                local_collections=local_collections,
-                remote_collections=remote_collections,
-                eval_script_duration=eval_duration,
-                n_samples=n_samples,
+        n_samples = len(
+            get_available_timestamps(
+                config=self.config,
+                bbox=BBox(bbox=request_input.get('bounds').get('bbox'), crs=CRS.WGS84),
+                time_interval=(
+                    request_input.get('data')[0].get('dataFilter').get('timeRange').get('from'),
+                    request_input.get('data')[0].get('dataFilter').get('timeRange').get('to'),
+                ),
+                data_collection=DataCollection.SENTINEL2_L2A,
             )
-            for eval_duration in (lower_eval_duration_bound, upper_eval_duration_bound)
-        ]
+        )
+        estimated_pus = SentinelHubOperator._calculate_pus(
+            width=bbox_width,
+            height=bbox_height,
+            band_number=band_number,
+            output_format=output_format,
+            local_collections=local_collections,
+            remote_collections=remote_collections,
+            n_samples=n_samples,
+        )
 
-        min_pu, max_pu = pu_range
-        log.info(f'Estimated PU consumed by request lie between: {min_pu} and {max_pu}')
-        return min_pu, max_pu
+        log.info(f'Estimated PU consumed by request are {estimated_pus}')
+        return ProcessingUnitStats(estimated=estimated_pus, consumed=math.nan)
 
     @staticmethod
     def _calculate_pus(
@@ -189,7 +200,7 @@ class SentinelHubOperator(ImageryStore):
         n_samples: int,
         local_collections: Set[str],
         remote_collections: Set[str],
-        eval_script_duration: int,
+        eval_script_duration: int = 200,
     ) -> float:
         aoi_factor = max((width * height) / (512 * 512), 0.01)
 
@@ -209,27 +220,22 @@ class SentinelHubOperator(ImageryStore):
 
         data_samples_factor = n_samples
 
+        if len(local_collections) > 1 or len(remote_collections) > 0:
+            log.warning(
+                'The estimation of PUs with remote collection or more than one collection seems to be imprecise.'
+            )
         data_fusion_factor = len(local_collections) + 2 * len(remote_collections)
 
-        if eval_script_duration > 200:
-            eval_factor = 1.0 + math.ceil((eval_script_duration - 200) / 100) * 0.5
-        else:
-            eval_factor = 1.0
+        eval_surcharge = max(eval_script_duration - 200, 0)
+        eval_factor = 1.0 + math.ceil(eval_surcharge / 100) * 0.5
 
-        return math.prod(
+        computed_pu: float = math.prod(
             (aoi_factor, band_factor, output_format_factor, data_samples_factor, data_fusion_factor, eval_factor)
         )
+        return max(computed_pu, 0.005)
 
     @staticmethod
-    def _get_actual_pus(data: DownloadResponse, min_estimated_pus: float, max_estimated_pus: float) -> float:
-        actual_pus = (
-            0.0 if min_estimated_pus == max_estimated_pus == 0.0 else float(data.headers['x-processingunits-spent'])
-        )
+    def _get_actual_pus(data: DownloadResponse) -> float:
+        actual_pus = float(data.headers['x-processingunits-spent'])
         logging.debug(f'The request required {actual_pus} PUs')
-        if actual_pus > 0.0 and not min_estimated_pus <= actual_pus <= max_estimated_pus:
-            log.warning(
-                f'The pu estimation was inaccurate. The request required {actual_pus} PUs but the estimated range '
-                f'was {min_estimated_pus}..{max_estimated_pus} PUs.'
-            )
-
         return actual_pus

@@ -8,7 +8,7 @@ from starlette.testclient import TestClient
 
 from app.api import app, Settings
 from app.route.common import Aggregation
-from naturalness.imagery_store_operator import ImageryStore, Index
+from naturalness.imagery_store_operator import ImageryStore, Index, RemoteSensingResult, ProcessingUnitStats
 
 
 class TestImageryStore(ImageryStore):
@@ -19,17 +19,50 @@ class TestImageryStore(ImageryStore):
         start_date: str,
         end_date: str,
         resolution: int = 10,
-    ) -> tuple[np.ndarray, tuple[int, int]]:
+    ) -> RemoteSensingResult:
         if None in (index, bbox, start_date, end_date, resolution):
             raise ValueError('Missing input parameters')
 
         match index:
             case Index.NDVI:
-                return np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32), (2, 3)
+                return RemoteSensingResult(
+                    index_data=np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32),
+                    height=2,
+                    width=3,
+                    bbox=(
+                        0,
+                        0,
+                        1,
+                        1,
+                    ),
+                    pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
+                )
             case Index.WATER:
-                return np.array([[255, 0, 0], [1, 1, 1]]), (2, 3)
+                return RemoteSensingResult(
+                    index_data=np.array([[255, 0, 0], [1, 1, 1]]),
+                    height=2,
+                    width=3,
+                    bbox=(
+                        0,
+                        0,
+                        1,
+                        1,
+                    ),
+                    pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
+                )
             case Index.NATURALNESS:
-                return np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32), (2, 3)
+                return RemoteSensingResult(
+                    index_data=np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32),
+                    height=2,
+                    width=3,
+                    bbox=(
+                        0,
+                        0,
+                        1,
+                        1,
+                    ),
+                    pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
+                )
             case _:
                 raise ValueError(f'Unsupported index {index}')
 

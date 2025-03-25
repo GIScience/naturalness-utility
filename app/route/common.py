@@ -1,13 +1,11 @@
 import logging
 import uuid
-from dataclasses import dataclass
 from datetime import date, timedelta
 from enum import StrEnum
 from pathlib import Path
 from typing import Tuple, Optional, List
 
 import geojson_pydantic
-import numpy as np
 import rasterio
 import shapely
 from pydantic import confloat, Field, BaseModel, model_validator
@@ -18,7 +16,7 @@ from shapely.geometry import shape
 from starlette.background import BackgroundTask
 from starlette.responses import FileResponse
 
-from naturalness.imagery_store_operator import Index
+from naturalness.imagery_store_operator import Index, RemoteSensingResult
 
 log = logging.getLogger(__name__)
 
@@ -33,14 +31,6 @@ Aggregation = StrEnum('Aggregation', utils.VALID_STATS)
 
 class GeoTiffResponse(FileResponse):
     media_type = 'image/geotiff'
-
-
-@dataclass
-class RemoteSensingResult:
-    index_data: np.ndarray
-    height: int
-    width: int
-    bbox: Tuple[float, float, float, float]
 
 
 class TimeRange(BaseModel):
