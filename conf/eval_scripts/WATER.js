@@ -12,8 +12,6 @@ function setup() {
             {
                 id: "WATER",
                 bands: ["WATER"],
-                resx: 10,
-                resy: 10,
                 sampleType: "UINT8",
                 nodataValue: 255
             }

@@ -91,15 +91,15 @@ def test_pu_calculation_benchmark():
     benchmark that we try to minimise.
     """
     pu = SentinelHubOperator._calculate_pus(
-        width=73,
-        height=111,
+        width=8,
+        height=12,
         band_number=3,
         output_format=OutputFormat.BIT_32,
         n_samples=4,
         local_collections={DataCollection.SENTINEL2_L2A},
         remote_collections=set(),
     )
-    np.testing.assert_almost_equal(actual=pu, desired=0.2472839356)
+    np.testing.assert_almost_equal(actual=pu, desired=0.08)
 
 
 def test_pu_estimation_benchmark(responses):
@@ -153,10 +153,10 @@ def test_pu_estimation_benchmark(responses):
                 bbox=(8.70, 49.41, 8.71, 49.42),
                 crs=CRS('EPSG:4326'),
             ),
-            size=(73, 111),
+            size=(8, 12),
         )
         pu_estimate = operator.estimate_pus(index=Index.NDVI, request=request)
-    np.testing.assert_almost_equal(actual=pu_estimate.estimated, desired=0.247283936)
+    np.testing.assert_almost_equal(actual=pu_estimate.estimated, desired=0.08)
 
 
 def test_pu_estimation_cached():
@@ -164,7 +164,7 @@ def test_pu_estimation_cached():
         api_id='api_id', api_secret='api_secret', script_path=Path('conf/eval_scripts'), cache_dir=Path('/tmp')
     )
     with tempfile.TemporaryDirectory() as tmpdir:
-        cached_file = Path(f'{tmpdir}/20c3eecdfe5bdcdc3d922897317aecaa/response.tiff')
+        cached_file = Path(f'{tmpdir}/313d266dfd11bf2c494920f1e7959398/response.tiff')
         cached_file.mkdir(parents=True)
 
         request = SentinelHubRequest(
@@ -183,7 +183,7 @@ def test_pu_estimation_cached():
                 bbox=(8.70, 49.41, 8.71, 49.42),
                 crs=CRS('EPSG:4326'),
             ),
-            size=(73, 111),
+            size=(8, 12),
         )
         pu_estimation = operator.estimate_pus(index=Index.NDVI, request=request)
     assert pu_estimation.estimated == 0.0
@@ -210,9 +210,9 @@ def test_uncached_result_get_actual_pus():
 @pytest.mark.parametrize(
     'index, result_stats, pus',
     [
-        (Index.NDVI, (-0.429441, 0.168175, 0.693002, 0.863718, 0.925646), 0.247283936),
-        (Index.WATER, (0, 0, 0, 0, 1), 0.041213989),
-        (Index.NATURALNESS, (0.0, 0.308331, 0.840473, 0.883342, 1.0), 0.247283936),
+        (Index.NDVI, (-1.0, 0.233076, 0.687334, 0.862654, 0.897737), 0.08),
+        (Index.WATER, (0, 0, 0, 0, 1), 0.0133333),
+        (Index.NATURALNESS, (0.0, 0.322881, 0.840935, 0.886175, 1.0), 0.08),
     ],
 )
 def test_pu_consumption_on_live_call(index: Index, result_stats: Tuple[float, float, float, float], pus: float):
@@ -220,7 +220,7 @@ def test_pu_consumption_on_live_call(index: Index, result_stats: Tuple[float, fl
 
     This test does a live call to sentinelhub. The result is cached, but will be ignored, if the input parameters
     for the SentinelHubRequest change. In this case the test will fail in CI and you have to re-compute it locally with
-    your sentinelhub credentials. To do so add @pytest.mark.withoutresponses to be able to bypass the responses which
+    your sentinelhub credentials. To do so add @pytest.mark.withoutresponses (as second annotation) to be able to bypass the responses which
     are automatically activated: https://github.com/getsentry/pytest-responses ;
     https://github.com/getsentry/pytest-responses/issues/5
     """

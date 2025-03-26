@@ -8,7 +8,7 @@ from typing import Tuple, Optional, List
 import geojson_pydantic
 import rasterio
 import shapely
-from pydantic import confloat, Field, BaseModel, model_validator
+from pydantic import confloat, Field, BaseModel, model_validator, conint
 from rasterio.crs import CRS
 from rasterstats import utils
 from rasterstats import zonal_stats
@@ -69,6 +69,12 @@ class NaturalnessWorkUnit(BaseModel):
         title='Time Range',
         description='The time range of satellite observations to base the index on.',
         examples=[TimeRange()],
+    )
+    resolution: conint(ge=10) = Field(
+        title='Resolution',
+        description='Resolution of the resulting raster image. Will be down sampled, if necessary.',
+        default=90,
+        examples=[90],
     )
     bbox: Tuple[
         confloat(ge=-180, le=180), confloat(ge=-90, le=90), confloat(ge=-180, le=180), confloat(ge=-90, le=90)
