@@ -11,6 +11,8 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 - the default time range is now the last complete calendar year. This enables the utility to do more extensive caching
   as the results will be stable for 1y for the same region.
+- the resolution is now 90m x 90m by default but can be set by the client. This is done to reduce the processing unit
+  consumption (see [#35](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/35)).
 
 ### Fixed
 

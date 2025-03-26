@@ -4,6 +4,7 @@ from typing import List, Annotated
 import geojson_pydantic
 from fastapi import APIRouter, Body
 from fastapi.responses import JSONResponse
+from pydantic import conint
 from starlette.requests import Request
 
 from app.route.common import (
@@ -16,7 +17,6 @@ from app.route.common import (
     Aggregation,
 )
 from naturalness.imagery_store_operator import Index
-
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ async def index_compute_raster(index: Index, body: NaturalnessWorkUnit, request:
         bbox=body.bbox,
         start_date=body.time_range.start_date.isoformat(),
         end_date=body.time_range.end_date.isoformat(),
+        resolution=body.resolution,
     )
     return __compute_raster_response(raster_result=raster_result, body=body, index=index)
 
@@ -74,6 +75,7 @@ async def index_compute_vector(
     ],
     time_range: TimeRange,
     request: Request,
+    resolution: conint(ge=10) = 90,
 ) -> geojson_pydantic.FeatureCollection:
     log.info(f'Creating index for {time_range}')
 
@@ -82,6 +84,7 @@ async def index_compute_vector(
         bbox=get_bbox(features=vectors),
         start_date=time_range.start_date.isoformat(),
         end_date=time_range.end_date.isoformat(),
+        resolution=resolution,
     )
 
     vector_response = __compute_vector_response(

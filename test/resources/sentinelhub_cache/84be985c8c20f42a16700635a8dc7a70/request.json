@@ -1,0 +1,69 @@
+{
+    "request": {
+        "headers": {
+            "accept": "image/tiff",
+            "content-type": "application/json"
+        },
+        "payload": {
+            "evalscript": "//VERSION=3\n\n//Based on https://custom-scripts.sentinel-hub.com/sentinel-2/max_ndvi/\n\nfunction setup() {\n    return {\n        input: [{\n            datasource: \"s2\",\n            bands: [\"B04\", \"B08\", \"SCL\", \"dataMask\"],\n        }],\n        output: [\n            {\n                id: \"NDVI\",\n                bands: [\"NDVI\"],\n                sampleType: \"FLOAT32\",\n                nodataValue: -999\n            },\n        ],\n        mosaicking: \"ORBIT\" //https://docs.sentinel-hub.com/api/latest/evalscript/v3/#mosaicking\n    }\n}\n\n\nfunction validate(sample) {\n    // See values in https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-2/scene-classification/\n    return ![0, 1, 8, 9, 10].includes(sample.SCL)\n}\n\n\nfunction findMedian(arr) {\n    arr.sort((a, b) => a - b);\n    const middleIndex = Math.floor(arr.length / 2);\n\n    if (arr.length % 2 === 0) {\n        return (arr[middleIndex - 1] + arr[middleIndex]) / 2;\n    } else {\n        return arr[middleIndex];\n    }\n}\n\n\nfunction evaluatePixel(samples) {\n    var ndvi_arr = []\n    for (const sample of samples) {\n        var isValid = validate(sample)\n\n        // dataMask === 1 means there is data in that pixel\n        if (isValid && (sample.dataMask === 1)) {\n            ndvi_value = index(sample.B08, sample.B04) // https://docs.sentinel-hub.com/api/latest/evalscript/functions/#index\n            ndvi_arr.push(ndvi_value)\n        }\n    }\n    return {NDVI: [findMedian(ndvi_arr)]};\n}",
+            "input": {
+                "bounds": {
+                    "bbox": [
+                        8.7,
+                        49.41,
+                        8.71,
+                        49.42
+                    ],
+                    "properties": {
+                        "crs": "http://www.opengis.net/def/crs/EPSG/0/4326"
+                    }
+                },
+                "data": [
+                    {
+                        "dataFilter": {
+                            "timeRange": {
+                                "from": "2024-09-01T00:00:00Z",
+                                "to": "2024-09-10T23:59:59Z"
+                            }
+                        },
+                        "id": "s2",
+                        "processing": {
+                            "downsampling": "BICUBIC"
+                        },
+                        "type": "sentinel-2-l2a"
+                    }
+                ]
+            },
+            "output": {
+                "height": 12,
+                "responses": [
+                    {
+                        "format": {
+                            "type": "image/tiff"
+                        },
+                        "identifier": "NDVI"
+                    }
+                ],
+                "width": 8
+            }
+        },
+        "timestamp": "2025-03-25T20:56:33.463672",
+        "url": "https://services.sentinel-hub.com/api/v1/process"
+    },
+    "response": {
+        "elapsed": 1.193082,
+        "headers": {
+            "Connection": "keep-alive",
+            "Content-Length": "785",
+            "Content-Type": "image/tiff",
+            "Date": "Tue, 25 Mar 2025 19:56:33 GMT",
+            "access-control-allow-credentials": "true",
+            "access-control-allow-headers": "origin,content-type,accept,accept-crs,authorization,cache-control",
+            "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
+            "access-control-allow-origin": "*",
+            "access-control-max-age": "3600",
+            "x-processingunits-spent": "0.08"
+        },
+        "status_code": 200
+    }
+}

@@ -18,6 +18,7 @@ from sentinelhub import (
     bbox_to_dimensions,
     SHConfig,
     ServiceUrl,
+    ResamplingType,
 )
 from sentinelhub.api.catalog import get_available_timestamps
 from sentinelhub.download.models import DownloadResponse
@@ -63,7 +64,7 @@ class ImageryStore(ABC):
         bbox: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
-        resolution: int = 10,
+        resolution: int = 90,
     ) -> RemoteSensingResult:
         pass
 
@@ -88,7 +89,7 @@ class SentinelHubOperator(ImageryStore):
         bbox: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
-        resolution: int = 10,
+        resolution: int = 90,
     ) -> RemoteSensingResult:
         bbox_obj = BBox(bbox=bbox, crs=CRS.WGS84)
         bbox_width, bbox_height = bbox_to_dimensions(bbox_obj, resolution=resolution)
@@ -104,6 +105,7 @@ class SentinelHubOperator(ImageryStore):
                     data_collection=DataCollection.SENTINEL2_L2A,
                     identifier='s2',
                     time_interval=(start_date, end_date),
+                    downsampling=ResamplingType.BICUBIC,
                 ),
             ],
             responses=[

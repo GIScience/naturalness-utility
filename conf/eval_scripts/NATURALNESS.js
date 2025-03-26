@@ -12,8 +12,6 @@ function setup() {
             {
                 id: "NATURALNESS",
                 bands: ["NATURALNESS"],
-                resx: 10,
-                resy: 10,
                 sampleType: "FLOAT32",
                 nodataValue: -999
             },

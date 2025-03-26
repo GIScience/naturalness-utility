@@ -12,8 +12,6 @@ function setup() {
             {
                 id: "NDVI",
                 bands: ["NDVI"],
-                resx: 10,
-                resy: 10,
                 sampleType: "FLOAT32",
                 nodataValue: -999
             },

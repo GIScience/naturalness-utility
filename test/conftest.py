@@ -18,7 +18,7 @@ class TestImageryStore(ImageryStore):
         bbox: Tuple[float, float, float, float],
         start_date: str,
         end_date: str,
-        resolution: int = 10,
+        resolution: int = 90,
     ) -> RemoteSensingResult:
         if None in (index, bbox, start_date, end_date, resolution):
             raise ValueError('Missing input parameters')
