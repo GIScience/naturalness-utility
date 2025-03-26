@@ -4,6 +4,7 @@ from typing import Tuple
 
 import numpy as np
 import pytest
+import responses
 from sentinelhub import DataCollection, DownloadRequest, MimeType, SentinelHubRequest, BBox
 from sentinelhub.constants import CRS
 from sentinelhub.download.models import DownloadResponse
@@ -94,15 +95,15 @@ def test_pu_calculation_benchmark():
         width=8,
         height=12,
         band_number=3,
-        output_format=OutputFormat.BIT_32,
+        output_format=OutputFormat.BIT_16,
         n_samples=4,
         local_collections={DataCollection.SENTINEL2_L2A},
         remote_collections=set(),
     )
-    np.testing.assert_almost_equal(actual=pu, desired=0.08)
+    np.testing.assert_almost_equal(actual=pu, desired=0.04)
 
 
-def test_pu_estimation_benchmark(responses):
+def test_pu_estimation_benchmark():
     """The following input to the raster end-point
 
     ```json
@@ -120,12 +121,15 @@ def test_pu_estimation_benchmark(responses):
     operator = SentinelHubOperator(
         api_id='api_id', api_secret='api_secret', script_path=Path('conf/eval_scripts'), cache_dir=Path('/tmp')
     )
-    with tempfile.TemporaryDirectory() as tmpdir:
-        responses.post(
+    with (
+        tempfile.TemporaryDirectory() as tmpdir,
+        responses.RequestsMock(assert_all_requests_are_fired=True) as request_mock,
+    ):
+        request_mock.post(
             'https://services.sentinel-hub.com/auth/realms/main/protocol/openid-connect/token',
             json={'access_token': 'foo', 'expires_in': '99999999'},
         )
-        responses.post(
+        request_mock.post(
             'https://services.sentinel-hub.com/api/v1/catalog/1.0.0/search',
             json={
                 'context': {'next': None},
@@ -156,7 +160,7 @@ def test_pu_estimation_benchmark(responses):
             size=(8, 12),
         )
         pu_estimate = operator.estimate_pus(index=Index.NDVI, request=request)
-    np.testing.assert_almost_equal(actual=pu_estimate.estimated, desired=0.08)
+    np.testing.assert_almost_equal(actual=pu_estimate.estimated, desired=0.04)
 
 
 def test_pu_estimation_cached():
@@ -210,9 +214,9 @@ def test_uncached_result_get_actual_pus():
 @pytest.mark.parametrize(
     'index, result_stats, pus',
     [
-        (Index.NDVI, (-1.0, 0.233076, 0.687334, 0.862654, 0.897737), 0.08),
+        (Index.NDVI, (-1.0, 0.233077, 0.687338, 0.862659, 0.897732), 0.04),
         (Index.WATER, (0, 0, 0, 0, 1), 0.0133333),
-        (Index.NATURALNESS, (0.0, 0.322881, 0.840935, 0.886175, 1.0), 0.08),
+        (Index.NATURALNESS, (0.0, 0.322885, 0.840932, 0.886175, 1.0), 0.04),
     ],
 )
 def test_pu_consumption_on_live_call(index: Index, result_stats: Tuple[float, float, float, float], pus: float):
@@ -220,9 +224,7 @@ def test_pu_consumption_on_live_call(index: Index, result_stats: Tuple[float, fl
 
     This test does a live call to sentinelhub. The result is cached, but will be ignored, if the input parameters
     for the SentinelHubRequest change. In this case the test will fail in CI and you have to re-compute it locally with
-    your sentinelhub credentials. To do so add @pytest.mark.withoutresponses (as second annotation) to be able to bypass the responses which
-    are automatically activated: https://github.com/getsentry/pytest-responses ;
-    https://github.com/getsentry/pytest-responses/issues/5
+    your sentinelhub credentials.
     """
     # the settings must be provided in an .env file or as env vars by the programmer that recreates the cashed data
     # also make sure to delete old cache data

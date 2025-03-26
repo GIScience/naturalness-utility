@@ -47,16 +47,16 @@
                 "width": 8
             }
         },
-        "timestamp": "2025-03-25T20:56:34.386409",
+        "timestamp": "2025-03-26T17:11:03.505766",
         "url": "https://services.sentinel-hub.com/api/v1/process"
     },
     "response": {
-        "elapsed": 0.663954,
+        "elapsed": 0.478904,
         "headers": {
             "Connection": "keep-alive",
             "Content-Length": "399",
             "Content-Type": "image/tiff",
-            "Date": "Tue, 25 Mar 2025 19:56:34 GMT",
+            "Date": "Wed, 26 Mar 2025 16:11:03 GMT",
             "access-control-allow-credentials": "true",
             "access-control-allow-headers": "origin,content-type,accept,accept-crs,authorization,cache-control",
             "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",

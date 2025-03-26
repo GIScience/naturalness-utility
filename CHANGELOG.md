@@ -13,6 +13,9 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
   as the results will be stable for 1y for the same region.
 - the resolution is now 90m x 90m by default but can be set by the client. This is done to reduce the processing unit
   consumption (see [#35](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/35)).
+- the output type for the naturalness and NDVI evalscripts is now 16 bit (which is then reverted in the client) to
+  reduce processing unit consumption by reducing precision (
+  see [#35](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/35)).
 
 ### Fixed
 

@@ -130,9 +130,19 @@ class SentinelHubOperator(ImageryStore):
                 f'{pu_stats.consumed} PUs.'
             )
 
+        data_cleaned = data.decode()
+        match index:
+            case 'NDVI':
+                divisor = 2**16 / 2 - 1
+            case 'NATURALNESS':
+                divisor = 2**16 - 1
+            case _:
+                divisor = 1
+        data_cleaned = data_cleaned / divisor
+
         log.info('RS data retrieved')
         return RemoteSensingResult(
-            index_data=data.decode(),
+            index_data=data_cleaned,
             height=bbox_height,
             width=bbox_width,
             bbox=bbox,
@@ -148,13 +158,13 @@ class SentinelHubOperator(ImageryStore):
         match index:
             case Index.NDVI:
                 band_number = 3
-                output_format = OutputFormat.BIT_32
+                output_format = OutputFormat.BIT_16
             case Index.WATER:
                 band_number = 1
                 output_format = OutputFormat.BIT_8
             case Index.NATURALNESS:
                 band_number = 3
-                output_format = OutputFormat.BIT_32
+                output_format = OutputFormat.BIT_16
             case _:
                 raise ValueError(f'Index {index} is not supported for PU estimation')
 

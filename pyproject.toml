@@ -28,7 +28,7 @@ semver = "^3.0.4"
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.1"
 httpx = "^0.28.1"
-pytest-responses = "^0.5.1"
+responses = "^0.25.7"
 
 
 [tool.poetry.group.dev.dependencies]
