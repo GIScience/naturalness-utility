@@ -12,7 +12,7 @@ function setup() {
             {
                 id: "NDVI",
                 bands: ["NDVI"],
-                sampleType: "FLOAT32",
+                sampleType: "INT16",
                 nodataValue: -999
             },
         ],
@@ -50,5 +50,7 @@ function evaluatePixel(samples) {
             ndvi_arr.push(ndvi_value)
         }
     }
-    return {NDVI: [findMedian(ndvi_arr)]};
+    var ndvi = findMedian(ndvi_arr)
+    ndvi = Math.round(ndvi * (2**16/2-1) ) // make result an integer because we are returning INT16 to save PUs, is reverted in the client
+    return {NDVI: [ndvi]};
 }

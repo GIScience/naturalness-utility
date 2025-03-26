@@ -12,7 +12,7 @@ function setup() {
             {
                 id: "NATURALNESS",
                 bands: ["NATURALNESS"],
-                sampleType: "FLOAT32",
+                sampleType: "UINT16",
                 nodataValue: -999
             },
         ],
@@ -61,5 +61,6 @@ function evaluatePixel(samples) {
     }
     let naturalness = findAverage(is_water_arr) >= 0.5 ? 1.0 : findMedian(ndvi_arr)
     naturalness = naturalness < 0.0 ? 0.0 : naturalness
+    naturalness = Math.round(naturalness * (2**16-1)) // make result an integer because we are returning INT16 to save PUs, is reverted in the client
     return {NATURALNESS: [naturalness]};
 }

@@ -5,7 +5,7 @@
             "content-type": "application/json"
         },
         "payload": {
-            "evalscript": "//VERSION=3\n\n//Based on https://custom-scripts.sentinel-hub.com/sentinel-2/max_ndvi/\n\nfunction setup() {\n    return {\n        input: [{\n            datasource: \"s2\",\n            bands: [\"B04\", \"B08\", \"SCL\", \"dataMask\"],\n        }],\n        output: [\n            {\n                id: \"NDVI\",\n                bands: [\"NDVI\"],\n                sampleType: \"FLOAT32\",\n                nodataValue: -999\n            },\n        ],\n        mosaicking: \"ORBIT\" //https://docs.sentinel-hub.com/api/latest/evalscript/v3/#mosaicking\n    }\n}\n\n\nfunction validate(sample) {\n    // See values in https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-2/scene-classification/\n    return ![0, 1, 8, 9, 10].includes(sample.SCL)\n}\n\n\nfunction findMedian(arr) {\n    arr.sort((a, b) => a - b);\n    const middleIndex = Math.floor(arr.length / 2);\n\n    if (arr.length % 2 === 0) {\n        return (arr[middleIndex - 1] + arr[middleIndex]) / 2;\n    } else {\n        return arr[middleIndex];\n    }\n}\n\n\nfunction evaluatePixel(samples) {\n    var ndvi_arr = []\n    for (const sample of samples) {\n        var isValid = validate(sample)\n\n        // dataMask === 1 means there is data in that pixel\n        if (isValid && (sample.dataMask === 1)) {\n            ndvi_value = index(sample.B08, sample.B04) // https://docs.sentinel-hub.com/api/latest/evalscript/functions/#index\n            ndvi_arr.push(ndvi_value)\n        }\n    }\n    return {NDVI: [findMedian(ndvi_arr)]};\n}",
+            "evalscript": "//VERSION=3\n\n//Based on https://custom-scripts.sentinel-hub.com/sentinel-2/max_ndvi/\n\nfunction setup() {\n    return {\n        input: [{\n            datasource: \"s2\",\n            bands: [\"B04\", \"B08\", \"SCL\", \"dataMask\"],\n        }],\n        output: [\n            {\n                id: \"NDVI\",\n                bands: [\"NDVI\"],\n                sampleType: \"INT16\",\n                nodataValue: -999\n            },\n        ],\n        mosaicking: \"ORBIT\" //https://docs.sentinel-hub.com/api/latest/evalscript/v3/#mosaicking\n    }\n}\n\n\nfunction validate(sample) {\n    // See values in https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-2/scene-classification/\n    return ![0, 1, 8, 9, 10].includes(sample.SCL)\n}\n\n\nfunction findMedian(arr) {\n    arr.sort((a, b) => a - b);\n    const middleIndex = Math.floor(arr.length / 2);\n\n    if (arr.length % 2 === 0) {\n        return (arr[middleIndex - 1] + arr[middleIndex]) / 2;\n    } else {\n        return arr[middleIndex];\n    }\n}\n\n\nfunction evaluatePixel(samples) {\n    var ndvi_arr = []\n    for (const sample of samples) {\n        var isValid = validate(sample)\n\n        // dataMask === 1 means there is data in that pixel\n        if (isValid && (sample.dataMask === 1)) {\n            ndvi_value = index(sample.B08, sample.B04) // https://docs.sentinel-hub.com/api/latest/evalscript/functions/#index\n            ndvi_arr.push(ndvi_value)\n        }\n    }\n    var ndvi = findMedian(ndvi_arr)\n    ndvi = Math.round(ndvi * (2**16/2-1) ) // make result an integer because we are returning INT16 to save PUs, is reverted in the client\n    return {NDVI: [ndvi]};\n}",
             "input": {
                 "bounds": {
                     "bbox": [
@@ -47,22 +47,22 @@
                 "width": 8
             }
         },
-        "timestamp": "2025-03-25T20:56:33.463672",
+        "timestamp": "2025-03-26T17:11:02.962176",
         "url": "https://services.sentinel-hub.com/api/v1/process"
     },
     "response": {
-        "elapsed": 1.193082,
+        "elapsed": 1.147066,
         "headers": {
             "Connection": "keep-alive",
-            "Content-Length": "785",
+            "Content-Length": "600",
             "Content-Type": "image/tiff",
-            "Date": "Tue, 25 Mar 2025 19:56:33 GMT",
+            "Date": "Wed, 26 Mar 2025 16:11:02 GMT",
             "access-control-allow-credentials": "true",
             "access-control-allow-headers": "origin,content-type,accept,accept-crs,authorization,cache-control",
             "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
             "access-control-allow-origin": "*",
             "access-control-max-age": "3600",
-            "x-processingunits-spent": "0.08"
+            "x-processingunits-spent": "0.04"
         },
         "status_code": 200
     }

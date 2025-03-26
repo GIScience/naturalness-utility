@@ -976,23 +976,6 @@ pluggy = ">=0.12,<2.0"
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
-name = "pytest-responses"
-version = "0.5.1"
-description = "py.test integration for responses"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pytest_responses-0.5.1-py2.py3-none-any.whl", hash = "sha256:4172e565b94ac1ea3b10aba6e40855ad60cd7f141476b2d8a47e4b5f250be734"},
-]
-
-[package.dependencies]
-pytest = ">=2.5"
-responses = "*"
-
-[package.extras]
-tests = ["flake8"]
-
-[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
@@ -1665,4 +1648,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.5"
-content-hash = "85720244c8227dc6c19bf45a0be3eff1b9ac0cc0fa822e6260a7fc36a5e887d9"
+content-hash = "4c09dd0305189b88dae713bf4ae259f08d54ce165dd80fc4b27808aaca48542e"
