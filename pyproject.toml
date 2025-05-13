@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "naturalness"
-version = "1.0.0"
+version = "1.1.0"
 description = "This utility provides the functionality of different indices derived from remote sensing data"
 authors = [
     "Danielle Gatland <danielle.gatland@heigit.org>",
