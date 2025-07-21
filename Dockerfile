@@ -16,6 +16,6 @@ COPY $PACKAGE_NAME $PACKAGE_NAME
 RUN poetry install --no-ansi --no-interaction --only-root
 
 SHELL ["/bin/bash", "-c"]
-ENTRYPOINT poetry run python app/api.py
+ENTRYPOINT exec poetry run python app/api.py
 
 EXPOSE 8000

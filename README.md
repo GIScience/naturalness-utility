@@ -41,12 +41,17 @@ Run `poetry run pre-commit install` to activate them.
 ## Docker
 
 The tool is also Dockerised.
-To start it, run the following commands
+Images are automatically built and deployed in the [CI-pipeline](.gitlab-ci.yml).
+
+In case you want to manually build and run locally (e.g. to test a new feature in development), execute
 
 ```
 docker build . --tag repo.heigit.org/climate-action/naturalness:devel
 docker run --rm --publish 8000:8000  --env-file .env repo.heigit.org/climate-action/naturalness:devel
 ```
+
+Note that this will overwrite any existing image with the same tag (i.e. the one you previously pulled from the Climate
+Action docker registry).
 
 ## Releasing a new utility version
 
