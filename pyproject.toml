@@ -13,9 +13,9 @@ readme = "README.md"
 repository = "https://git@gitlab.heigit.org:2022/climate-action/utilities/naturalness-utility"
 
 [tool.poetry.dependencies]
-python = "~3.11.5"
-fastapi = "^0.115.6"
-uvicorn = "^0.34.0"
+python = "~3.13.0"
+fastapi = "^0.116.0"
+uvicorn = "^0.35.0"
 sentinelhub = "^3.10.2"
 pydantic = "^2.8.2"
 pydantic-settings = "^2.7.1"
