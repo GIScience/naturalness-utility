@@ -3,7 +3,7 @@ unit_tests:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   image:
-    name: python:3.11.5
+    name: python:3.13.6
   variables:
     PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
   cache:
