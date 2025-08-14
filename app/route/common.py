@@ -144,6 +144,6 @@ def __compute_vector_response(
 
 def get_bbox(features: geojson_pydantic.FeatureCollection) -> Tuple[float, float, float, float]:
     geoms = []
-    for feature in features:
+    for feature in features.iter():
         geoms.append(shape(feature.geometry))
     return shapely.GeometryCollection(geoms).bounds
