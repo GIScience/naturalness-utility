@@ -78,11 +78,13 @@ def test_compute_vector_response():
     )
 
     assert isinstance(geom, geojson_pydantic.FeatureCollection)
-    for g_in, g_out in zip(test_geometries, geom):
+    for g_in, g_out in zip(test_geometries.iter(), geom.iter()):
         assert g_in.geometry == g_out.geometry
 
-    assert geom[0].properties['max'] == 0.5
-    assert geom[1].properties['max'] == 1.0
+    print(geom)
+
+    assert geom.features[1].properties['max'] == 1.0
+    assert geom.features[0].properties['max'] == 0.5
 
 
 def test_get_bbox(default_feature_collection):
