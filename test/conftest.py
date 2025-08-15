@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 from starlette.testclient import TestClient
 
-from app.api import app, Settings
+from app.api import Settings, app
 from app.route.common import Aggregation
-from naturalness.imagery_store_operator import ImageryStore, Index, RemoteSensingResult, ProcessingUnitStats
+from naturalness.imagery_store_operator import ImageryStore, Index, ProcessingUnitStats, RemoteSensingResult
 
 
 class TestImageryStore(ImageryStore):

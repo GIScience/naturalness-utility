@@ -5,12 +5,12 @@ from typing import Tuple
 import numpy as np
 import pytest
 import responses
-from sentinelhub import DataCollection, DownloadRequest, MimeType, SentinelHubRequest, BBox
+from sentinelhub import BBox, DataCollection, DownloadRequest, MimeType, SentinelHubRequest
 from sentinelhub.constants import CRS
 from sentinelhub.download.models import DownloadResponse
 
 from app.api import Settings
-from naturalness.imagery_store_operator import SentinelHubOperator, OutputFormat, Index
+from naturalness.imagery_store_operator import Index, OutputFormat, SentinelHubOperator
 
 
 def test_documented_pu_calculation_example_change_detection():

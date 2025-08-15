@@ -1,5 +1,5 @@
 import logging.config
-from typing import List, Annotated
+from typing import Annotated, List
 
 import geojson_pydantic
 from fastapi import APIRouter, Body
@@ -8,13 +8,13 @@ from pydantic import conint
 from starlette.requests import Request
 
 from app.route.common import (
+    Aggregation,
     GeoTiffResponse,
     NaturalnessWorkUnit,
+    TimeRange,
     __compute_raster_response,
     __compute_vector_response,
-    TimeRange,
     get_bbox,
-    Aggregation,
 )
 from naturalness.imagery_store_operator import Index
 

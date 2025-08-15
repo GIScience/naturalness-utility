@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 import naturalness
-from app.route import imagery, health
+from app.route import health, imagery
 from naturalness.imagery_store_operator import SentinelHubOperator
 
 log = logging.getLogger(__name__)

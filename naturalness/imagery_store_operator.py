@@ -3,9 +3,9 @@ import math
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import StrEnum, Enum
+from enum import Enum, StrEnum
 from pathlib import Path
-from typing import Tuple, Set
+from typing import Set, Tuple
 
 import numpy as np
 from sentinelhub import (
@@ -14,16 +14,16 @@ from sentinelhub import (
     DataCollection,
     DownloadFailedException,
     MimeType,
-    SentinelHubRequest,
-    bbox_to_dimensions,
-    SHConfig,
-    ServiceUrl,
     ResamplingType,
+    SentinelHubRequest,
+    ServiceUrl,
+    SHConfig,
+    bbox_to_dimensions,
 )
 from sentinelhub.api.catalog import get_available_timestamps
 from sentinelhub.download.models import DownloadResponse
 
-from naturalness.exception import OperatorInteractionException, OperatorValidationException
+from naturalness.exception import OperatorInteractionError, OperatorValidationError
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class SentinelHubOperator(ImageryStore):
         bbox_width, bbox_height = bbox_to_dimensions(bbox_obj, resolution=resolution)
 
         if bbox_width > 2500 or bbox_height > 2500:
-            raise OperatorValidationException('Area exceeds processing limit: 2500 px x 2500 px')
+            raise OperatorValidationError('Area exceeds processing limit: 2500 px x 2500 px')
 
         request = SentinelHubRequest(
             data_folder=str(self.data_folder),
@@ -120,7 +120,7 @@ class SentinelHubOperator(ImageryStore):
             data = request.get_data(save_data=True, decode_data=False)[0]
         except DownloadFailedException:
             log.exception('Download of remote sensing scenes failed')
-            raise OperatorInteractionException('SentinelHub operator interaction not possible.')
+            raise OperatorInteractionError('SentinelHub operator interaction not possible.')
 
         pu_stats.consumed = self._get_actual_pus(data=data)
 
