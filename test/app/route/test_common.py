@@ -5,9 +5,8 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
-from app.route.common import Aggregation, TimeRange
-from app.route.common import NaturalnessWorkUnit, get_bbox, __compute_vector_response
-from naturalness.imagery_store_operator import Index, RemoteSensingResult, ProcessingUnitStats
+from app.route.common import Aggregation, NaturalnessWorkUnit, TimeRange, __compute_vector_response, get_bbox
+from naturalness.imagery_store_operator import Index, ProcessingUnitStats, RemoteSensingResult
 
 
 def test_time_range_infer_date_start():

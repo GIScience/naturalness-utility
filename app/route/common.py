@@ -3,15 +3,14 @@ import uuid
 from datetime import date, timedelta
 from enum import StrEnum
 from pathlib import Path
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
 
 import geojson_pydantic
 import rasterio
 import shapely
-from pydantic import confloat, Field, BaseModel, model_validator, conint
+from pydantic import BaseModel, Field, confloat, conint, model_validator
 from rasterio.crs import CRS
-from rasterstats import utils
-from rasterstats import zonal_stats
+from rasterstats import utils, zonal_stats
 from shapely.geometry import shape
 from starlette.background import BackgroundTask
 from starlette.responses import FileResponse
