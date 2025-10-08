@@ -80,10 +80,45 @@ def test_compute_vector_response():
     for g_in, g_out in zip(test_geometries.iter(), geom.iter()):
         assert g_in.geometry == g_out.geometry
 
-    print(geom)
-
     assert geom.features[1].properties['max'] == 1.0
     assert geom.features[0].properties['max'] == 0.5
+
+
+def test_compute_vector_response_polygon_smaller_than_raster_cell():
+    bbox = (0.0, 0.0, 2.0, 2.0)
+    test_geometries = geojson_pydantic.FeatureCollection.model_validate(
+        {
+            'type': 'FeatureCollection',
+            'features': [
+                {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [[[0.0, 0.0], [0.1, 0.0], [0.1, 0.1], [0.0, 0.1], [0.0, 0.0]]],
+                    },
+                    'properties': {},
+                },
+            ],
+        }
+    )
+    data = np.ones(shape=(2, 2))
+
+    test_raster_result = RemoteSensingResult(
+        index_data=data,
+        height=data.shape[0],
+        width=data.shape[1],
+        bbox=bbox,
+        pus=ProcessingUnitStats(estimated=12, consumed=12),
+    )
+
+    geom = __compute_vector_response(
+        stats=[Aggregation.max],
+        vectors=test_geometries,
+        index=Index.NDVI,
+        raster_result=test_raster_result,
+    )
+
+    assert geom.features[0].properties['max'] == 1.0
 
 
 def test_get_bbox(default_feature_collection):

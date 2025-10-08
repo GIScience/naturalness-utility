@@ -136,6 +136,7 @@ def __compute_vector_response(
         ),
         geojson_out=True,
         nodata=NO_DATA_VALUES[index],
+        all_touched=True,
     )
 
     return geojson_pydantic.FeatureCollection(type='FeatureCollection', features=geojson)
