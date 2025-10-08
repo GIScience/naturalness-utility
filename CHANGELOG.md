@@ -5,13 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/1.1.0...main)
+## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/1.1.1...main)
+
+
+## [1.1.1](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.1.1) - 2025-10-08
+
+### Fixed
+
+- use `all_touched` pixels in the `vector` endpoint to ensure valid (i.e., non-NA) results even if polygons are smaller
+  than the raster cell size ([#39](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/39))
 
 ### Changed
 
 - `compute_vector` endpoint now takes `resolution` as a body parameter instead of a query parameter, to match the design
   of the `compute_raster`
   endpoint ([#40](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/40))
+- Python from version 3.11 to 3.13
 
 ## [1.1.0](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.1.0) - 2025-05-13
 
