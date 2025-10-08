@@ -7,6 +7,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/1.1.0...main)
 
+### Changed
+
+- `compute_vector` endpoint now takes `resolution` as a body parameter instead of a query parameter, to match the design
+  of the `compute_raster`
+  endpoint ([#40](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/40))
 
 ## [1.1.0](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.1.0) - 2025-05-13
 
