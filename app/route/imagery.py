@@ -75,7 +75,7 @@ async def index_compute_vector(
     ],
     time_range: TimeRange,
     request: Request,
-    resolution: conint(ge=10) = 90,
+    resolution: Annotated[conint(ge=10), Body()] = 90,
 ) -> geojson_pydantic.FeatureCollection:
     log.info(f'Creating index for {time_range}')
 
