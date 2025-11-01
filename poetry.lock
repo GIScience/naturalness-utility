@@ -1436,14 +1436,14 @@ files = [
 
 [[package]]
 name = "sentinelhub"
-version = "3.11.2"
+version = "3.11.3"
 description = "Python API for Sentinel Hub"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "sentinelhub-3.11.2-py3-none-any.whl", hash = "sha256:d83dd6de2e28cf83a2e544fd8073adc715a5c13a6ed149111a5c155b394a41b0"},
-    {file = "sentinelhub-3.11.2.tar.gz", hash = "sha256:f4f41de982d970819a38381422ea35333907ee3dc2f8cd7cbdb8416f6c64da8a"},
+    {file = "sentinelhub-3.11.3-py3-none-any.whl", hash = "sha256:93429c5ee98fbf5e425995b62ce415f95a465e79434789595bef6afe62068a4f"},
+    {file = "sentinelhub-3.11.3.tar.gz", hash = "sha256:c58aad1d8c35a1e2697c3a29515fcf99265b30d03a685be1ba106f4a7e58ce22"},
 ]
 
 [package.dependencies]
