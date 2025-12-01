@@ -1,4 +1,4 @@
-FROM python:3.13.7-bookworm
+FROM python:3.13.9-bookworm
 
 ENV PACKAGE_NAME='naturalness'
 
