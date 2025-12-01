@@ -26,7 +26,7 @@ pyyaml = "^6.0.2"
 semver = "^3.0.4"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.0.0"
+pytest = "^9.0.0"
 pytest-cov = "^7.0.0"
 httpx = "^0.28.1"
 responses = "^0.25.7"
@@ -60,7 +60,7 @@ select = [
 [tool.coverage.run]
 omit = ["test/*"]
 
-[tool.pytest.ini_options]
+[tool.pytest]
 markers = [
     "external: marks tests that potentially make external API calls (deselect with '-m \"not external\"')",
 ]
