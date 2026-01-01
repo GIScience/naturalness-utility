@@ -1,7 +1,7 @@
 # See repositories to check each declared pre-commit hook
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       # work around custom yaml syntax of !reference in gitlab ci
       - id: check-yaml
@@ -16,7 +16,7 @@ repos:
       - id: detect-private-key
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.9
+    rev: v0.14.10
     hooks:
       - id: ruff-check
         args: [ --fix ]
