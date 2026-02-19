@@ -7,6 +7,11 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/1.1.1...main)
 
+### Changed
+
+- fail early if the user requests a bbox x resolution combination that would return a zero-dimension
+  raster ([#41](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/41))
+
 
 ## [1.1.1](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.1.1) - 2025-10-08
 
