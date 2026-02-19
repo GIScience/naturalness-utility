@@ -10,7 +10,38 @@ from sentinelhub.constants import CRS
 from sentinelhub.download.models import DownloadResponse
 
 from app.api import Settings
+from naturalness.exception import OperatorValidationError
 from naturalness.imagery_store_operator import Index, OutputFormat, SentinelHubOperator
+
+
+def test_fail_early_when_invalid_dimensions_requested():
+    imagery_store_operator = SentinelHubOperator(
+        api_id='', api_secret='', script_path=Path('conf/eval_scripts'), cache_dir=Path('')
+    )
+
+    with pytest.raises(
+        OperatorValidationError,
+        match=r'Edge dimensions of requested area must be between \(0, 2500\). You requested \(6, 0\)',
+    ):
+        imagery_store_operator.imagery(
+            index=Index.NDVI,
+            bbox=[8.6750335, 49.4186102, 8.6826074, 49.4186635],
+            start_date='2021-06-01',
+            end_date='2022-06-01',
+            resolution=90,
+        )
+
+    with pytest.raises(
+        OperatorValidationError,
+        match=r'Edge dimensions of requested area must be between \(0, 2500\). You requested \(10930, 898\)',
+    ):
+        imagery_store_operator.imagery(
+            index=Index.NDVI,
+            bbox=[8.6209912, 49.4153231, 8.7716466, 49.4237994],
+            start_date='2021-06-01',
+            end_date='2022-06-01',
+            resolution=1,
+        )
 
 
 def test_documented_pu_calculation_example_change_detection():

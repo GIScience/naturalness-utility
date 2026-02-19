@@ -94,8 +94,10 @@ class SentinelHubOperator(ImageryStore):
         bbox_obj = BBox(bbox=bbox, crs=CRS.WGS84)
         bbox_width, bbox_height = bbox_to_dimensions(bbox_obj, resolution=resolution)
 
-        if bbox_width > 2500 or bbox_height > 2500:
-            raise OperatorValidationError('Area exceeds processing limit: 2500 px x 2500 px')
+        if min(bbox_width, bbox_height) <= 0 or max(bbox_width, bbox_height) > 2500:
+            raise OperatorValidationError(
+                f'Edge dimensions of requested area must be between (0, 2500). You requested {bbox_width, bbox_height}'
+            )
 
         request = SentinelHubRequest(
             data_folder=str(self.data_folder),
