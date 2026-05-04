@@ -14,8 +14,8 @@ repository = "https://git@gitlab.heigit.org:2022/climate-action/utilities/natura
 
 [tool.poetry.dependencies]
 python = "~3.13.0"
-fastapi = "^0.135.0"
-uvicorn = "^0.42.0"
+fastapi = "^0.136.0"
+uvicorn = "^0.46.0"
 sentinelhub = "^3.10.2"
 pydantic = "^2.8.2"
 pydantic-settings = "^2.7.1"
