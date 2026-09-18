@@ -12,6 +12,9 @@ authors = [
 readme = "README.md"
 repository = "https://git@gitlab.heigit.org:2022/climate-action/utilities/naturalness-utility"
 
+[tool.poetry.scripts]
+naturalness = "app.api:start"
+
 [tool.poetry.dependencies]
 python = "~3.13.0"
 fastapi = "^0.141.0"

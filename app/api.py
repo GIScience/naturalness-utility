@@ -84,7 +84,8 @@ app = FastAPI(
 app.include_router(imagery.router)
 app.include_router(health.router)
 
-if __name__ == '__main__':
+
+def start():
     # the settings must be provided in an .env file or as env vars by the programmer that recreates the cashed data
     # noinspection PyArgumentList
     settings = Settings()
@@ -95,7 +96,7 @@ if __name__ == '__main__':
 
     log.info('Starting Naturalness Utility')
     uvicorn.run(
-        'api:app',
+        app,
         host='0.0.0.0',
         port=int(os.getenv('NATURALNESS_UTILITY_API_PORT', 8000)),
         root_path=os.getenv('ROOT_PATH', '/'),
@@ -103,3 +104,7 @@ if __name__ == '__main__':
         log_level=settings.log_level.lower(),
         workers=int(os.getenv('NATURALNESS_UVICORN_WORKERS', 1)),
     )
+
+
+if __name__ == '__main__':
+    start()
