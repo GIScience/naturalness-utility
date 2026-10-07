@@ -16,13 +16,13 @@ repository = "https://git@gitlab.heigit.org:2022/climate-action/utilities/natura
 naturalness = "app.api:start"
 
 [tool.poetry.dependencies]
-python = "~3.13.0"
-fastapi = "^0.141.0"
-uvicorn = "^0.52.0"
+python = "~3.14.0"
+fastapi = "^0.142.0"
+uvicorn = "^0.54.0"
 sentinelhub = "^3.10.2"
 pydantic = "^2.8.2"
 pydantic-settings = "^2.7.1"
-geojson-pydantic = "~2.1.0"
+geojson-pydantic = "~2.2.0"
 rasterio = "^1.3.10"
 rasterstats = "^0.21.0"
 pyyaml = "^6.0.2"

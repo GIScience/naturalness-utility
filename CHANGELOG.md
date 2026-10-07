@@ -9,6 +9,7 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ### Changed
 
+- only support Python3.14 (instead of 3.13)
 - fail early if the user requests a bbox x resolution combination that would return a zero-dimension
   raster ([#41](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/41))
 - reduced size of docker image by using python-slim, multi-stage build, and including only the required files

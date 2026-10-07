@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm AS python_base
+FROM python:3.14-slim-bookworm AS python_base
 
 # Install system-level shared libs needed by compiled deps (e.g. rasterio -> libexpat)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
