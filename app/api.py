@@ -74,7 +74,6 @@ app = FastAPI(
     contact={
         'name': 'Climate Acton Team',
         'url': 'https://heigit.org/climate-action',
-        'email': 'info@heigit.org',
     },
     openapi_tags=tags_metadata,
     lifespan=configure_dependencies,
