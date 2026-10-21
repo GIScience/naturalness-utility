@@ -14,6 +14,9 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
   raster ([#41](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/41))
 - reduced size of docker image by using python-slim, multi-stage build, and including only the required files
 
+### Fixed
+
+- the log comparing estimated vs actual processing units consumed is now the correct way around ([#48](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/48))
 
 ## [1.1.1](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.1.1) - 2025-10-08
 

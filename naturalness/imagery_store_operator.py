@@ -128,8 +128,8 @@ class SentinelHubOperator(ImageryStore):
 
         if pu_stats.consumed > 0.0 and not math.isclose(pu_stats.estimated, pu_stats.consumed):
             log.warning(
-                f'The pu estimation was inaccurate. The request required {pu_stats.estimated} PUs but the estimation was '
-                f'{pu_stats.consumed} PUs.'
+                f'The pu estimation was inaccurate. The request required {pu_stats.consumed} PUs but the estimation was '
+                f'{pu_stats.estimated} PUs.'
             )
 
         data_cleaned = data.decode()
