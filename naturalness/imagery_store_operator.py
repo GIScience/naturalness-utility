@@ -28,6 +28,9 @@ from naturalness.exception import OperatorInteractionError, OperatorValidationEr
 log = logging.getLogger(__name__)
 
 
+MINIMUM_PU_CHARGE = 0.005
+
+
 @dataclass
 class ProcessingUnitStats:
     estimated: float
@@ -126,11 +129,15 @@ class SentinelHubOperator(ImageryStore):
 
         pu_stats.consumed = self._get_actual_pus(data=data)
 
-        if pu_stats.consumed > 0.0 and not math.isclose(pu_stats.estimated, pu_stats.consumed):
-            log.warning(
-                f'The pu estimation was inaccurate. The request required {pu_stats.consumed} PUs but the estimation was '
-                f'{pu_stats.estimated} PUs.'
+        if not math.isnan(pu_stats.consumed):
+            pu_comparison_msg = (
+                'The pu estimation was inaccurate.'
+                f'The request required {pu_stats.consumed} PUs but the estimate was {pu_stats.estimated} PUs.'
             )
+            if pu_stats.consumed > pu_stats.estimated:
+                log.warning(pu_comparison_msg)
+            elif not math.isclose(pu_stats.consumed, pu_stats.estimated, abs_tol=MINIMUM_PU_CHARGE):
+                log.info(pu_comparison_msg)
 
         data_cleaned = data.decode()
         match index:
@@ -246,7 +253,7 @@ class SentinelHubOperator(ImageryStore):
         computed_pu: float = math.prod(
             (aoi_factor, band_factor, output_format_factor, data_samples_factor, data_fusion_factor, eval_factor)
         )
-        return max(computed_pu, 0.005)
+        return max(computed_pu, MINIMUM_PU_CHARGE)
 
     @staticmethod
     def _get_actual_pus(data: DownloadResponse) -> float:
