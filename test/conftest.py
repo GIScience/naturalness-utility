@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Generator, Tuple
 from unittest.mock import patch
 
 import geojson_pydantic
@@ -8,72 +8,77 @@ from starlette.testclient import TestClient
 
 from app.api import Settings, app
 from app.route.common import Aggregation
-from naturalness.imagery_store_operator import ImageryStore, Index, ProcessingUnitStats, RemoteSensingResult
+from naturalness.imagery_store_operator import (
+    Index,
+    ProcessingUnitStats,
+    RemoteSensingResult,
+    SentinelHubOperator,
+)
 
 
-class TestImageryStore(ImageryStore):
-    def imagery(
-        self,
-        index: Index,
-        bbox: Tuple[float, float, float, float],
-        start_date: str,
-        end_date: str,
-        resolution: int = 90,
-    ) -> RemoteSensingResult:
-        if None in (index, bbox, start_date, end_date, resolution):
-            raise ValueError('Missing input parameters')
+def mock_imagery(
+    index: Index,
+    bbox: Tuple[float, float, float, float],
+    start_date: str,
+    end_date: str,
+    resolution: int = 90,
+) -> RemoteSensingResult:
+    if None in (index, bbox, start_date, end_date, resolution):
+        raise ValueError('Missing input parameters')
 
-        match index:
-            case Index.NDVI:
-                return RemoteSensingResult(
-                    index_data=np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32),
-                    height=2,
-                    width=3,
-                    bbox=(
-                        0,
-                        0,
-                        1,
-                        1,
-                    ),
-                    pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
-                )
-            case Index.WATER:
-                return RemoteSensingResult(
-                    index_data=np.array([[255, 0, 0], [1, 1, 1]]),
-                    height=2,
-                    width=3,
-                    bbox=(
-                        0,
-                        0,
-                        1,
-                        1,
-                    ),
-                    pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
-                )
-            case Index.NATURALNESS:
-                return RemoteSensingResult(
-                    index_data=np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32),
-                    height=2,
-                    width=3,
-                    bbox=(
-                        0,
-                        0,
-                        1,
-                        1,
-                    ),
-                    pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
-                )
-            case _:
-                raise ValueError(f'Unsupported index {index}')
+    match index:
+        case Index.NDVI:
+            return RemoteSensingResult(
+                index_data=np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32),
+                height=2,
+                width=3,
+                bbox=(
+                    0,
+                    0,
+                    1,
+                    1,
+                ),
+                pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
+            )
+        case Index.WATER:
+            return RemoteSensingResult(
+                index_data=np.array([[255, 0, 0], [1, 1, 1]]),
+                height=2,
+                width=3,
+                bbox=(
+                    0,
+                    0,
+                    1,
+                    1,
+                ),
+                pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
+            )
+        case Index.NATURALNESS:
+            return RemoteSensingResult(
+                index_data=np.array([[-999.0, 0.0, 0.5], [1.0, 1.0, 1.0]], dtype=np.float32),
+                height=2,
+                width=3,
+                bbox=(
+                    0,
+                    0,
+                    1,
+                    1,
+                ),
+                pus=ProcessingUnitStats(estimated=0.0, consumed=0.01),
+            )
+        case _:
+            raise ValueError(f'Unsupported index {index}')
 
 
 @pytest.fixture
-def mocked_client() -> TestClient:
-    with patch(
-        'app.api.Settings', return_value=Settings(sentinelhub_api_id='no_id', sentinelhub_api_secret='no_secret')
+def mocked_client() -> Generator[TestClient, None, None]:
+    default_settings = Settings(sentinelhub_api_id='no_id', sentinelhub_api_secret='no_secret')
+    with (
+        patch('app.api.Settings', return_value=default_settings),
+        patch.object(target=SentinelHubOperator, attribute='imagery', side_effect=mock_imagery),
+        TestClient(app) as client,
     ):
         client = TestClient(app)
-        app.state.imagery_store = TestImageryStore()
 
         yield client
 
