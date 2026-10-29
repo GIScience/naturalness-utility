@@ -114,7 +114,7 @@ def start():
     warnings.filterwarnings(
         'always', message='Download rate limit hit', category=SHRateLimitWarning, module='sentinelhub'
     )
-    logging.captureWarnings()
+    logging.captureWarnings(True)
 
     log.info('Starting Naturalness Utility')
     uvicorn.run(
