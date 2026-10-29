@@ -5,12 +5,14 @@ import geojson_pydantic
 from fastapi import APIRouter, Body
 from fastapi.responses import JSONResponse
 from pydantic import conint
+from sentinelhub import CRS, BBox, bbox_to_dimensions
 from starlette.requests import Request
 
 from app.route.common import (
     Aggregation,
     GeoTiffResponse,
     NaturalnessWorkUnit,
+    PuEstimationResponse,
     TimeRange,
     __compute_raster_response,
     __compute_vector_response,
@@ -96,3 +98,24 @@ async def index_compute_vector(
     log.info(f'Finished for {time_range}')
 
     return vector_response
+
+
+@router.post(
+    '/{index}/raster/estimate_pus',
+    summary='Estimate processing units required.',
+    description='Use the provided work unit to estimate how many processing units will be consumed in the request.',
+)
+async def index_estimate_raster_pus(index: Index, body: NaturalnessWorkUnit, request: Request) -> PuEstimationResponse:
+    bbox_obj = BBox(bbox=body.bbox, crs=CRS.WGS84)
+    bbox_width, bbox_height = bbox_to_dimensions(bbox_obj, resolution=body.resolution)
+    sh_request = request.app.state.imagery_store.construct_sentinel_request(
+        index=index,
+        start_date=body.time_range.start_date,
+        end_date=body.time_range.end_date,
+        bbox=bbox_obj,
+        bbox_shape=(bbox_width, bbox_height),
+    )
+    estimated_pus = request.app.state.imagery_store.estimate_pus(index=index, request=sh_request)
+    return PuEstimationResponse(
+        estimated_pus=estimated_pus.estimated, pu_quota_per_minute=request.app.state.imagery_store.pu_quota_per_minute
+    )

@@ -14,16 +14,12 @@ from naturalness.exception import OperatorValidationError
 from naturalness.imagery_store_operator import Index, OutputFormat, SentinelHubOperator
 
 
-def test_fail_early_when_invalid_dimensions_requested():
-    imagery_store_operator = SentinelHubOperator(
-        api_id='', api_secret='', script_path=Path('conf/eval_scripts'), cache_dir=Path('')
-    )
-
+def test_fail_early_when_invalid_dimensions_requested(default_sentinel_hub_operator):
     with pytest.raises(
         OperatorValidationError,
         match=r'Edge dimensions of requested area must be between \(0, 2500\). You requested \(6, 0\)',
     ):
-        imagery_store_operator.imagery(
+        default_sentinel_hub_operator.imagery(
             index=Index.NDVI,
             bbox=[8.6750335, 49.4186102, 8.6826074, 49.4186635],
             start_date='2021-06-01',
@@ -35,7 +31,7 @@ def test_fail_early_when_invalid_dimensions_requested():
         OperatorValidationError,
         match=r'Edge dimensions of requested area must be between \(0, 2500\). You requested \(10930, 898\)',
     ):
-        imagery_store_operator.imagery(
+        default_sentinel_hub_operator.imagery(
             index=Index.NDVI,
             bbox=[8.6209912, 49.4153231, 8.7716466, 49.4237994],
             start_date='2021-06-01',
@@ -134,7 +130,7 @@ def test_pu_calculation_benchmark():
     np.testing.assert_almost_equal(actual=pu, desired=0.04)
 
 
-def test_pu_estimation_benchmark():
+def test_pu_estimation_benchmark(default_sentinel_hub_operator):
     """The following input to the raster end-point
 
     ```json
@@ -149,9 +145,6 @@ def test_pu_estimation_benchmark():
 
     will lead to the here described estimation variables.
     """
-    operator = SentinelHubOperator(
-        api_id='api_id', api_secret='api_secret', script_path=Path('conf/eval_scripts'), cache_dir=Path('/tmp')
-    )
     with (
         tempfile.TemporaryDirectory() as tmpdir,
         responses.RequestsMock(assert_all_requests_are_fired=True) as request_mock,
@@ -190,14 +183,11 @@ def test_pu_estimation_benchmark():
             ),
             size=(8, 12),
         )
-        pu_estimate = operator.estimate_pus(index=Index.NDVI, request=request)
+        pu_estimate = default_sentinel_hub_operator.estimate_pus(index=Index.NDVI, request=request)
     np.testing.assert_almost_equal(actual=pu_estimate.estimated, desired=0.04)
 
 
-def test_pu_estimation_cached():
-    operator = SentinelHubOperator(
-        api_id='api_id', api_secret='api_secret', script_path=Path('conf/eval_scripts'), cache_dir=Path('/tmp')
-    )
+def test_pu_estimation_cached(default_sentinel_hub_operator):
     with tempfile.TemporaryDirectory() as tmpdir:
         cached_file = Path(f'{tmpdir}/313d266dfd11bf2c494920f1e7959398/response.tiff')
         cached_file.mkdir(parents=True)
@@ -220,14 +210,11 @@ def test_pu_estimation_cached():
             ),
             size=(8, 12),
         )
-        pu_estimation = operator.estimate_pus(index=Index.NDVI, request=request)
+        pu_estimation = default_sentinel_hub_operator.estimate_pus(index=Index.NDVI, request=request)
     assert pu_estimation.estimated == 0.0
 
 
-def test_uncached_result_get_actual_pus():
-    operator = SentinelHubOperator(
-        api_id='api_id', api_secret='api_secret', script_path=Path('conf/eval_scripts'), cache_dir=Path('/tmp')
-    )
+def test_uncached_result_get_actual_pus(default_sentinel_hub_operator):
     data = DownloadResponse(
         request=DownloadRequest(
             url='https://test.com/api/v1/endpoint',
@@ -237,7 +224,7 @@ def test_uncached_result_get_actual_pus():
             'x-processingunits-spent': '11.06396484375',
         },
     )
-    actual_pus = operator._get_actual_pus(data=data)
+    actual_pus = default_sentinel_hub_operator._get_actual_pus(data=data)
     np.testing.assert_almost_equal(actual=actual_pus, desired=11.06396484375)
 
 
@@ -264,6 +251,7 @@ def test_pu_consumption_on_live_call(index: Index, result_stats: Tuple[float, fl
     operator = SentinelHubOperator(
         api_id=settings.sentinelhub_api_id,
         api_secret=settings.sentinelhub_api_secret,
+        pu_quota_per_minute=50,
         script_path=Path('conf/eval_scripts'),
         cache_dir=Path('test/resources/sentinelhub_cache'),
     )

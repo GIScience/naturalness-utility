@@ -7,6 +7,10 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/compare/1.1.1...main)
 
+### Added
+
+- Endpoint to estimate required processing units ([#47](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/47))
+
 ### Changed
 
 - only support Python3.14 (instead of 3.13)
@@ -18,6 +22,9 @@ and this project mostly adheres to [Semantic Versioning](https://semver.org/spec
 
 - the log comparing estimated vs actual processing units consumed is now the correct way around, and is only a warning
   log if consumed > estimate ([#48](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/48))
+
+- Download rate limit exceeded now appears as an `ERROR` in the logs instead of only a `DEBUG`
+  message ([#47](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/issues/47))
 
 ## [1.1.1](https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/releases/1.1.1) - 2025-10-08
 

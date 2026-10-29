@@ -106,3 +106,15 @@ def test_index_vector_raise_exception_invalid_summary(mocked_client, index, defa
 
     response = mocked_client.post(f'/{index}/vector', json=default_vector_request)
     assert response.status_code == 422
+
+
+def test_index_raster_estimate_pus(mocked_client):
+    request_body = {
+        'bbox': [8.70, 49.41, 8.71, 49.42],
+        'time_range': {'start_date': '2024-09-01', 'end_date': '2024-09-10'},
+    }
+
+    response = mocked_client.post('/NDVI/raster/estimate_pus', json=request_body)
+
+    assert response.status_code == 200
+    assert response.json() == {'estimated_pus': 0.01, 'pu_quota_per_minute': 500}

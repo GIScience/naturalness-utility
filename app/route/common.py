@@ -32,6 +32,11 @@ class GeoTiffResponse(FileResponse):
     media_type = 'image/geotiff'
 
 
+class PuEstimationResponse(BaseModel):
+    estimated_pus: float
+    pu_quota_per_minute: float
+
+
 class TimeRange(BaseModel):
     start_date: Optional[date] = Field(
         title='Start Date',

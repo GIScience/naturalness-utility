@@ -77,14 +77,44 @@ class SentinelHubOperator(ImageryStore):
         self,
         api_id: str,
         api_secret: str,
+        pu_quota_per_minute: float,
         script_path: Path,
         cache_dir: Path,
     ):
         self.config = SHConfig(**{'sh_client_id': api_id, 'sh_client_secret': api_secret})
+        self.pu_quota_per_minute = pu_quota_per_minute
         self.evalscripts = {index: (script_path / f'{index}.js').read_text() for index in Index}
 
         self.data_folder = cache_dir
         self.data_folder.mkdir(parents=True, exist_ok=True)
+
+    def construct_sentinel_request(
+        self,
+        index: Index,
+        start_date: str,
+        end_date: str,
+        bbox: BBox,
+        bbox_shape: tuple[int, int],  # w, h
+    ) -> SentinelHubRequest:
+        request = SentinelHubRequest(
+            data_folder=str(self.data_folder),
+            evalscript=self.evalscripts[index],
+            input_data=[
+                SentinelHubRequest.input_data(
+                    data_collection=DataCollection.SENTINEL2_L2A,
+                    identifier='s2',
+                    time_interval=(start_date, end_date),
+                    downsampling=ResamplingType.BICUBIC,
+                ),
+            ],
+            responses=[
+                SentinelHubRequest.output_response(index, MimeType.TIFF),
+            ],
+            bbox=bbox,
+            size=bbox_shape,
+            config=self.config,
+        )
+        return request
 
     def imagery(
         self,
@@ -102,23 +132,12 @@ class SentinelHubOperator(ImageryStore):
                 f'Edge dimensions of requested area must be between (0, 2500). You requested {bbox_width, bbox_height}'
             )
 
-        request = SentinelHubRequest(
-            data_folder=str(self.data_folder),
-            evalscript=self.evalscripts[index],
-            input_data=[
-                SentinelHubRequest.input_data(
-                    data_collection=DataCollection.SENTINEL2_L2A,
-                    identifier='s2',
-                    time_interval=(start_date, end_date),
-                    downsampling=ResamplingType.BICUBIC,
-                ),
-            ],
-            responses=[
-                SentinelHubRequest.output_response(index, MimeType.TIFF),
-            ],
+        request = self.construct_sentinel_request(
+            index=index,
+            start_date=start_date,
+            end_date=end_date,
             bbox=bbox_obj,
-            size=(bbox_width, bbox_height),
-            config=self.config,
+            bbox_shape=(bbox_width, bbox_height),
         )
         pu_stats = self.estimate_pus(index=index, request=request)
         try:

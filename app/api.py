@@ -1,5 +1,6 @@
 import logging.config
 import os
+import warnings
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -7,6 +8,7 @@ import uvicorn
 import yaml
 from fastapi import FastAPI
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sentinelhub.exceptions import SHRateLimitWarning
 
 import naturalness
 from app.route import health, imagery
@@ -22,7 +24,19 @@ class Settings(BaseSettings):
     sentinelhub_api_id: str
     sentinelhub_api_secret: str
 
+    # Planet documentation no longer documents the per minute quotas per account tier, but when it did, our tier
+    # had a rate limit of 500 PUs/minute (https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/work_items/47#note_103380)
+    # which is approx. 50 MCs/minute.
+    sentinelhub_mc_limit_per_minute: int = 50
+
     model_config = SettingsConfigDict(env_file='.env')
+
+    @property
+    def sentinel_hub_pu_limit_per_minute(self):
+        # Planet converted from 'processing units' to 'monitoring credits', at a rate of roughly 10:1. Until we update
+        # our codebase to count MCs instead of PUs, we have this property to smooth the transition.
+        # https://gitlab.heigit.org/climate-action/utilities/naturalness-utility/-/work_items/50
+        return self.sentinelhub_mc_limit_per_minute * 10
 
 
 description = """
@@ -57,6 +71,7 @@ async def configure_dependencies(app: FastAPI):
     app.state.imagery_store = SentinelHubOperator(
         api_id=settings.sentinelhub_api_id,
         api_secret=settings.sentinelhub_api_secret,
+        pu_quota_per_minute=settings.sentinel_hub_pu_limit_per_minute,
         script_path=settings.conf_path / 'eval_scripts',
         cache_dir=Path('./cache') / 'imagery',
     )
@@ -92,6 +107,14 @@ def start():
     log_config = settings.conf_path / 'logging.yaml'
     with open(log_config) as file:
         logging.config.dictConfig(yaml.safe_load(file))
+
+    # SentinelHub uses warnings.warn to flag rate limit errors, so they only appear in stderr and not in
+    # logs (https://github.com/sentinel-hub/sentinelhub-py/issues/588). We make sure to always print such warnings and
+    # to capture all warnings to the logging module so we actually see them each time they happen.
+    warnings.filterwarnings(
+        'always', message='Download rate limit hit', category=SHRateLimitWarning, module='sentinelhub'
+    )
+    logging.captureWarnings()
 
     log.info('Starting Naturalness Utility')
     uvicorn.run(

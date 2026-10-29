@@ -1,3 +1,5 @@
+from datetime import datetime
+from pathlib import Path
 from typing import Generator, Tuple
 from unittest.mock import patch
 
@@ -75,12 +77,24 @@ def mocked_client() -> Generator[TestClient, None, None]:
     default_settings = Settings(sentinelhub_api_id='no_id', sentinelhub_api_secret='no_secret')
     with (
         patch('app.api.Settings', return_value=default_settings),
+        patch('naturalness.imagery_store_operator.get_available_timestamps', return_value=[datetime(2026, 1, 1)]),
         patch.object(target=SentinelHubOperator, attribute='imagery', side_effect=mock_imagery),
         TestClient(app) as client,
     ):
         client = TestClient(app)
 
         yield client
+
+
+@pytest.fixture
+def default_sentinel_hub_operator():
+    return SentinelHubOperator(
+        api_id='api_id',
+        api_secret='api_secret',
+        pu_quota_per_minute=50,
+        script_path=Path('conf/eval_scripts'),
+        cache_dir=Path('/tmp'),
+    )
 
 
 @pytest.fixture
